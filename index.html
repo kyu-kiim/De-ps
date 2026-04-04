@@ -1,160 +1,189 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title>DE-PS</title>
-  <!--웹 브라우징 제목!-->
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2685.4">
-  <style type="text/css">
-    body {
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DE-PS Flip Page</title>
+  <style>
+    html, body {
       margin: 0;
       padding: 0;
-
-}
-
-#background {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  perspective: 1000px;
-  z-index: -1;
-
-  transform-style: preserve-3d;
-}
-
-.plane {
-  position: absolute;
-  width: 175px;
-  height: 300px;
-  background: blue;
-  transform-style: preserve-3d;
-  transform: translateX(var(--tx)) translateY(var(--ty)) rotateX(var(--rx)) rotateZ(var(--tz));
-}
-    h1 {
-      margin: 0;
-      padding: 0 20px 20px 20px;
-      color: black;
-      text-align: center;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      font-size: 120px;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Inter, system-ui, sans-serif;
+      background: #111;
+      color: #fff;
     }
-    p {
-      margin: 0;
-      padding: 20px;
-      color: black;
-      text-align: center;
+
+    .scene {
       position: relative;
-      top: 500px;
-      left: 0;
-      right: 0;
-      background: white;
-      z-index: 1000;
-      font-size: 20px;
+      width: 100vw;
+      height: 100vh;
+      perspective: 1400px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, rgba(10,10,10,1) 0%, rgba(18,18,30,1) 100%);
     }
-    #grid-canvas {
-      position: fixed;
+
+    .card {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      transform-style: preserve-3d;
+      transition: transform 1s cubic-bezier(.18,.52,.38,1.04);
+      box-shadow: 0 40px 120px rgba(0,0,0,0.5);
+    }
+
+    .card.is-flipped {
+      transform: rotateY(180deg);
+    }
+
+    .page {
+      position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      z-index: -2;
+      backface-visibility: hidden;
+      display: grid;
+      place-items: center;
+      padding: 40px;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .page::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.04);
+      pointer-events: none;
+    }
+
+    .page.front {
+      background: radial-gradient(circle at top left, rgba(122, 119, 255, 0.18), transparent 35%),
+                  linear-gradient(180deg, rgba(12,12,18,1), rgba(8,8,14,1));
+    }
+
+    .page.back {
+      background: radial-gradient(circle at bottom right, rgba(0,255,200,0.12), transparent 35%),
+                  linear-gradient(180deg, rgba(14,10,22,1), rgba(6,6,12,1));
+      transform: rotateY(180deg);
+    }
+
+    .panel {
+      position: relative;
+      width: min(920px, calc(100% - 80px));
+      max-width: 100%;
+      padding: 48px;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 32px 80px rgba(0,0,0,0.4);
+      backdrop-filter: blur(14px);
+      background: rgba(8, 8, 14, 0.86);
+      display: grid;
+      gap: 18px;
+      z-index: 1;
+    }
+
+    .panel h1 {
+      margin: 0;
+      font-size: clamp(3rem, 5vw, 5.5rem);
+      letter-spacing: -0.08em;
+      line-height: 1;
+      text-transform: uppercase;
+      color: #eef;
+    }
+
+    .panel p {
+      margin: 0;
+      font-size: 1.05rem;
+      line-height: 1.85;
+      color: rgba(240,240,255,0.82);
+    }
+
+    .button-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      padding: 14px 22px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.12);
+      box-shadow: 0 14px 38px rgba(0,0,0,0.28);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .side-note {
+      color: rgba(170,220,255,0.72);
+      font-size: 0.95rem;
     }
   </style>
 </head>
 <body>
-  <canvas id="grid-canvas"></canvas>
-  <div id="background"></div>
-  <!--웹 타이틀!-->
-<h1>DE-PS</h1>
-<p>Turn on your cell phone at that time. And turn on Google Maps. Is the blue dot that exists as if it is really you? Does it say exactly where you are? GPS systems are not an absolute exact location, but rather an infinite number of mine-like errors and fierce flagging to address them.</p>
+  <div class="scene">
+    <div class="card" id="card">
+      <section class="page front">
+        <div class="panel">
+          <h1>DE-PS</h1>
+          <p>Flip the viewport like a physical sheet. This page is a simulated card face — same document, same layer, different state.</p>
+          <div class="button-row">
+            <button id="flip-back">Backside</button>
+            <button id="flip-next">Next page</button>
+          </div>
+          <div class="side-note">Brutalist interface, tactile momentum, 3D feel without navigating away.</div>
+        </div>
+      </section>
 
-  <div style="height: 6000px;"> </div>
+      <section class="page back">
+        <div class="panel">
+          <h1>Back Side</h1>
+          <p>You have arrived on the reverse face. The flip is controlled by state, not by loading another page. Click the button to flip back.</p>
+          <div class="button-row">
+            <button id="flip-front">Frontside</button>
+          </div>
+          <div class="side-note">Overflow is locked during the transition so the effect stays immersive.</div>
+        </div>
+      </section>
+    </div>
+  </div>
 
+  <script>
+    const card = document.getElementById('card');
+    const flipBack = document.getElementById('flip-back');
+    const flipFront = document.getElementById('flip-front');
 
+    flipBack.addEventListener('click', () => {
+      card.classList.add('is-flipped');
+    });
 
-<script>
-const background = document.getElementById('background');
-const planeSize = 200;
-const spacing = 200;
-const numX = Math.ceil(window.innerWidth / spacing) + 2;
-const numY = Math.ceil(window.innerHeight / spacing) + 2;
-for (let i = -1; i < numX; i++) {
-  for (let j = -1; j < numY; j++) {
-    const plane = document.createElement('div');
-    plane.className = 'plane';
-    plane.style.setProperty('--tx', i * spacing + 'px');
-    plane.style.setProperty('--ty', j * spacing + 'px');
-    background.appendChild(plane);
-  }
-}
+    flipFront.addEventListener('click', () => {
+      card.classList.remove('is-flipped');
+    });
 
-let rotateZ = 0;
-let rotateX = 45;
-let direction = 1;
-
-function animate() {
-  rotateZ += direction * 1.5;
-  rotateX += direction * 0.75;
-  document.documentElement.style.setProperty('--tz', rotateZ + 'deg');
-  document.documentElement.style.setProperty('--rx', rotateX + 'deg');
-  requestAnimationFrame(animate);
-}
-
-animate();
-
-window.addEventListener('wheel', (e) => {
-  direction = e.deltaY > 0 ? 1 : -1;
-});
-
-// Draw neon grid
-const canvas = document.getElementById('grid-canvas');
-const ctx = canvas.getContext('2d');
-
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  drawGrid();
-}
-
-function drawGrid() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-  // Neon cyan color
-  ctx.strokeStyle = '#00ffff';
-  ctx.shadowColor = '#00ffff';
-  ctx.shadowBlur = 5;
-  ctx.lineWidth = 1;
-  
-  const gridSpacing = 50;
-  
-  // Draw vertical lines
-  for (let x = 0; x < canvas.width; x += gridSpacing) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, canvas.height);
-    ctx.stroke();
-  }
-  
-  // Draw horizontal lines
-  for (let y = 0; y < canvas.height; y += gridSpacing) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(canvas.width, y);
-    ctx.stroke();
-  }
-}
-
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-</script>
-
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' || event.key === 'Backspace') {
+        card.classList.remove('is-flipped');
+      }
+    });
+  </script>
 </body>
 </html>
