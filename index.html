@@ -14,29 +14,32 @@
 
 }
 
-.bg-box {
+#background {
   position: fixed;
-  top: 50%;
-  left: 50%;
-
-  width: 400px;
-  height: 400px;
-  background: black;
-
-  transform: translate(-50%, -50%) rotateX(45deg) rotateZ(0deg);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  perspective: 1000px;
+  z-index: -1;
   transform-style: preserve-3d;
-
-  animation: spin 8s linear infinite;
-
-  z-index: -1; /* 배경으로 */
 }
 
-@keyframes spin {
-  from {
-    transform: translate(-50%, -50%) rotateX(45deg) rotateZ(0deg);
+.plane {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background: black;
+  transform-style: preserve-3d;
+  animation: rotate 10s linear infinite;
+}
+
+@keyframes rotate {
+  0% {
+    transform: translateX(var(--tx)) translateY(var(--ty)) rotateX(45deg) rotateZ(0deg);
   }
-  to {
-    transform: translate(-50%, -50%) rotateX(45deg) rotateZ(360deg);
+  100% {
+    transform: translateX(var(--tx)) translateY(var(--ty)) rotateX(45deg) rotateZ(360deg);
   }
 }
     h1 {
@@ -55,9 +58,26 @@
   </style>
 </head>
 <body>
-  <div class="bg-box"></div>
+  <div id="background"></div>
   <!--웹 타이틀!-->
 <h1>DE-PS</h1>
+
+<script>
+const background = document.getElementById('background');
+const planeSize = 200;
+const spacing = 200;
+const numX = Math.ceil(window.innerWidth / spacing) + 2;
+const numY = Math.ceil(window.innerHeight / spacing) + 2;
+for (let i = -1; i < numX; i++) {
+  for (let j = -1; j < numY; j++) {
+    const plane = document.createElement('div');
+    plane.className = 'plane';
+    plane.style.setProperty('--tx', i * spacing + 'px');
+    plane.style.setProperty('--ty', j * spacing + 'px');
+    background.appendChild(plane);
+  }
+}
+</script>
 
 </body>
 </html>
