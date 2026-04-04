@@ -30,17 +30,8 @@
   width: 150px;
   height: 300px;
   background: blue;
-  transform-style: 3d;
-  animation: rotate 10s linear infinite;
-}
-
-@keyframes rotate {
-  0% {
-    transform: translateX(var(--tx)) translateY(var(--ty)) rotateX(45deg) rotateZ(0deg) ;
-  }
-  100% {
-    transform: translateX(var(--tx)) translateY(var(--ty)) rotateX(360deg) rotateZ(360deg) ;
-  }
+  transform-style: preserve-3d;
+  transform: translateX(var(--tx)) translateY(var(--ty)) rotateX(45deg) rotateZ(var(--rz));
 }
     h1 {
       margin: 0;
@@ -76,6 +67,21 @@ for (let i = -1; i < numX; i++) {
     background.appendChild(plane);
   }
 }
+
+let rotateZ = 0;
+let direction = 1;
+
+function animate() {
+  rotateZ += direction * 0.5;
+  document.documentElement.style.setProperty('--rz', rotateZ + 'deg');
+  requestAnimationFrame(animate);
+}
+
+animate();
+
+window.addEventListener('wheel', (e) => {
+  direction = e.deltaY > 0 ? 1 : -1;
+});
 </script>
 
 </body>
