@@ -32,7 +32,7 @@
   height: 300px;
   background: blue;
   transform-style: preserve-3d;
-  transform: translateX(var(--tx)) translateY(var(--ty)) rotateX(45deg) rotateZ(var(360deg));
+  transform: translateX(var(--tx)) translateY(var(--ty)) rotateX(var(--rx)) rotateZ(var(--tz));
 }
     h1 {
       margin: 0;
@@ -89,11 +89,14 @@ for (let i = -1; i < numX; i++) {
 }
 
 let rotateZ = 0;
+let rotateX = 45;
 let direction = 1;
 
 function animate() {
   rotateZ += direction * 1.5;
-  document.documentElement.style.setProperty('--rz', rotateZ + 'deg');
+  rotateX += direction * 0.75;
+  document.documentElement.style.setProperty('--tz', rotateZ + 'deg');
+  document.documentElement.style.setProperty('--rx', rotateX + 'deg');
   requestAnimationFrame(animate);
 }
 
