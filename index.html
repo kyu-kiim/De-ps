@@ -118,10 +118,9 @@
       transform: rotateY(180deg);
     }
 
-    #flip-trigger,
-    #flip-back {
+    #flip-toggle {
       position: fixed;
-      bottom: 24px;
+      top: 24px;
       right: 24px;
       z-index: 1002;
       appearance: none;
@@ -134,8 +133,7 @@
       transition: transform 0.2s ease, background 0.2s ease;
     }
 
-    #flip-trigger:hover,
-    #flip-back:hover {
+    #flip-toggle:hover {
       transform: translateY(-2px);
     }
 
@@ -173,7 +171,6 @@
           <h1>DE-PS</h1>
           <p>Turn on your cell phone at that time. And turn on Google Maps. Is the blue dot that exists as if it is really you? Does it say exactly where you are? GPS systems are not an absolute exact location, but rather an infinite number of mine-like errors and fierce flagging to address them.</p>
           <div style="height: 6000px;"> </div>
-          <button id="flip-trigger">Backside</button>
         </div>
       </section>
 
@@ -182,14 +179,12 @@
           <div class="back-panel">
             <h1>Back Side</h1>
             <p>This is still the same document, but flipped to a new face. The content is layered in 3D instead of loading a new page.</p>
-            <button id="flip-back">Flip Front</button>
           </div>
         </div>
       </section>
     </div>
   </div>
-
-
+  <button id="flip-toggle">Flip</button>
 
 <script>
 const background = document.getElementById('background');
@@ -267,17 +262,17 @@ resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
 const flipCard = document.getElementById('flip-card');
-const flipTrigger = document.getElementById('flip-trigger');
-const flipBack = document.getElementById('flip-back');
+const flipToggle = document.getElementById('flip-toggle');
 
-flipTrigger.addEventListener('click', () => {
-  flipCard.classList.add('is-flipped');
-  document.body.style.overflow = 'hidden';
-});
-
-flipBack.addEventListener('click', () => {
-  flipCard.classList.remove('is-flipped');
-  document.body.style.overflow = '';
+flipToggle.addEventListener('click', () => {
+  flipCard.classList.toggle('is-flipped');
+  if (flipCard.classList.contains('is-flipped')) {
+    document.body.style.overflow = 'hidden';
+    flipToggle.textContent = 'Flip Back';
+  } else {
+    document.body.style.overflow = '';
+    flipToggle.textContent = 'Flip';
+  }
 });
 </script>
 
