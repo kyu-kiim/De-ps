@@ -28,7 +28,7 @@
 
 .plane {
   position: absolute;
-  width: 200px;
+  width: 150px;
   height: 300px;
   background: blue;
   transform-style: preserve-3d;
@@ -75,7 +75,7 @@ let rotateZ = 0;
 let direction = 1;
 
 function animate() {
-  rotateZ += direction * 0.5;
+  rotateZ += direction * 1;
   document.documentElement.style.setProperty('--rz', rotateZ + 'deg');
   requestAnimationFrame(animate);
 }
