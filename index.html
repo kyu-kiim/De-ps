@@ -59,24 +59,13 @@
       z-index: 1000;
       font-size: 20px;
     }
-    #grid-canvas-back {
+    #grid-canvas {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
       z-index: -2;
-    }
-
-    #background-back {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      perspective: 1000px;
-      z-index: -1;
-      transform-style: preserve-3d;
     }
 
     .scene {
@@ -129,10 +118,6 @@
       transform: rotateY(180deg);
     }
 
-    .back-panel {
-      transform: rotateY(180deg);
-    }
-
     #flip-toggle {
       position: fixed;
       top: 24px;
@@ -153,26 +138,28 @@
     }
 
     .back-panel {
-      width: min(900px, calc(100% - 60px));
-      margin: 60px auto 0;
-      padding: 40px;
-      border: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 0 40px 120px rgba(0,0,0,0.45);
-      color: #e5f7ff;
-      display: grid;
-      gap: 20px;
-      transform: rotateY(180deg);
+     position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  perspective: 1000px;
+  z-index: -1;
+
+  transform-style: preserve-3d;
     }
 
     .back-panel h1 {
       margin: 0;
-      font-size: clamp(3rem, 5vw, 5rem);
-      letter-spacing: -0.07em;
-    }
-
-    .back-panel p {
-      margin: 0;
-      line-height: 1.8;
+      padding: 0 20px 20px 20px;
+      color: black;
+      text-align: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      font-size: 120px;
     }
   </style>
 </head>
@@ -192,11 +179,9 @@
 
       <section class="page back">
         <div class="page-content">
-          <canvas id="grid-canvas-back"></canvas>
-          <div id="background-back"></div>
+          <canvas id="grid-canvas"></canvas>
           <div class="back-panel">
-            <h1>Back Side</h1>
-            <p>This is still the same document, but flipped to a new face. The content is layered in 3D instead of loading a new page.</p>
+            <h1>DE-PS</h1>
           </div>
         </div>
       </section>
@@ -217,17 +202,6 @@ for (let i = -1; i < numX; i++) {
     plane.style.setProperty('--tx', i * spacing + 'px');
     plane.style.setProperty('--ty', j * spacing + 'px');
     background.appendChild(plane);
-  }
-}
-
-const backgroundBack = document.getElementById('background-back');
-for (let i = -1; i < numX; i++) {
-  for (let j = -1; j < numY; j++) {
-    const plane = document.createElement('div');
-    plane.className = 'plane';
-    plane.style.setProperty('--tx', i * spacing + 'px');
-    plane.style.setProperty('--ty', j * spacing + 'px');
-    backgroundBack.appendChild(plane);
   }
 }
 
@@ -290,59 +264,18 @@ function drawGrid() {
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
-// Back canvas
-const canvasBack = document.getElementById('grid-canvas-back');
-const ctxBack = canvasBack.getContext('2d');
-
-function resizeCanvasBack() {
-  canvasBack.width = window.innerWidth;
-  canvasBack.height = window.innerHeight;
-  drawGridBack();
-}
-
-function drawGridBack() {
-  ctxBack.clearRect(0, 0, canvasBack.width, canvasBack.height);
-  
-  // Neon cyan color
-  ctxBack.strokeStyle = '#00ffff';
-  ctxBack.shadowColor = '#00ffff';
-  ctxBack.shadowBlur = 5;
-  ctxBack.lineWidth = 1;
-  
-  const gridSpacing = 50;
-  
-  // Draw vertical lines
-  for (let x = 0; x < canvasBack.width; x += gridSpacing) {
-    ctxBack.beginPath();
-    ctxBack.moveTo(x, 0);
-    ctxBack.lineTo(x, canvasBack.height);
-    ctxBack.stroke();
-  }
-  
-  // Draw horizontal lines
-  for (let y = 0; y < canvasBack.height; y += gridSpacing) {
-    ctxBack.beginPath();
-    ctxBack.moveTo(0, y);
-    ctxBack.lineTo(canvasBack.width, y);
-    ctxBack.stroke();
-  }
-}
-
-resizeCanvasBack();
-window.addEventListener('resize', resizeCanvasBack);
-
 const flipCard = document.getElementById('flip-card');
-const flipTrigger = document.getElementById('flip-trigger');
-const flipBack = document.getElementById('flip-back');
+const flipToggle = document.getElementById('flip-toggle');
 
-flipTrigger.addEventListener('click', () => {
-  flipCard.classList.add('is-flipped');
-  document.body.style.overflow = 'hidden';
-});
-
-flipBack.addEventListener('click', () => {
-  flipCard.classList.remove('is-flipped');
-  document.body.style.overflow = '';
+flipToggle.addEventListener('click', () => {
+  flipCard.classList.toggle('is-flipped');
+  if (flipCard.classList.contains('is-flipped')) {
+    document.body.style.overflow = 'hidden';
+    flipToggle.textContent = 'Flip Back';
+  } else {
+    document.body.style.overflow = '';
+    flipToggle.textContent = 'Flip';
+  }
 });
 </script>
 
