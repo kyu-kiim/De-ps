@@ -92,11 +92,26 @@
       position: absolute;
       inset: 0;
       backface-visibility: hidden;
+      overflow: hidden;
+    }
+
+    .page-content {
+      position: absolute;
+      inset: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
       padding: 0;
+      backface-visibility: hidden;
+    }
+
+    .page.front .page-content {
+      transform: none;
+    }
+
+    .page.back .page-content {
+      transform: rotateY(180deg);
     }
 
     .page.back {
@@ -155,20 +170,24 @@
   <div class="scene">
     <div class="card" id="flip-card">
       <section class="page front">
-        <canvas id="grid-canvas"></canvas>
-        <div id="background"></div>
-        <!--웹 타이틀!-->
-        <h1>DE-PS</h1>
-        <p>Turn on your cell phone at that time. And turn on Google Maps. Is the blue dot that exists as if it is really you? Does it say exactly where you are? GPS systems are not an absolute exact location, but rather an infinite number of mine-like errors and fierce flagging to address them.</p>
-        <div style="height: 6000px;"> </div>
-        <button id="flip-trigger">Backside</button>
+        <div class="page-content">
+          <canvas id="grid-canvas"></canvas>
+          <div id="background"></div>
+          <!--웹 타이틀!-->
+          <h1>DE-PS</h1>
+          <p>Turn on your cell phone at that time. And turn on Google Maps. Is the blue dot that exists as if it is really you? Does it say exactly where you are? GPS systems are not an absolute exact location, but rather an infinite number of mine-like errors and fierce flagging to address them.</p>
+          <div style="height: 6000px;"> </div>
+          <button id="flip-trigger">Backside</button>
+        </div>
       </section>
 
       <section class="page back">
-        <div class="back-panel">
-          <h1>Back Side</h1>
-          <p>This is still the same document, but flipped to a new face. The content is layered in 3D instead of loading a new page.</p>
-          <button id="flip-back">Flip Front</button>
+        <div class="page-content">
+          <div class="back-panel">
+            <h1>Back Side</h1>
+            <p>This is still the same document, but flipped to a new face. The content is layered in 3D instead of loading a new page.</p>
+            <button id="flip-back">Flip Front</button>
+          </div>
         </div>
       </section>
     </div>
