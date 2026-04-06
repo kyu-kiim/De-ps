@@ -13,6 +13,7 @@
       padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       overflow-x: hidden;
+      overflow-y: auto;
     }
 
 #background {
@@ -50,17 +51,18 @@
     .white-panel {
       margin: 0 auto;
       width: min(900px, calc(100% - 40px));
-      padding: 20px;
+      padding: 32px 26px 26px;
       background: white;
       color: black;
       text-align: center;
       position: relative;
-      top: 500px;
+      top: 0;
       left: 0;
       right: 0;
       z-index: 1000;
       font-size: 20px;
       border-radius: 18px;
+      box-shadow: 0 18px 48px rgba(0,0,0,0.12);
     }
     .white-panel p {
       margin: 0 0 24px 0;
@@ -79,16 +81,22 @@
       z-index: -2;
     }
 
+    html, body {
+      min-height: 100vh;
+      height: auto;
+      overflow-x: hidden;
+    }
+
     .scene {
       position: relative;
       width: 100vw;
-      height: 100vh;
+      min-height: 100vh;
       perspective: 1200px;
-      overflow: hidden;
+      overflow: visible;
     }
 
     .card {
-      position: absolute;
+      position: relative;
       inset: 0;
       transform-style: preserve-3d;
       transition: transform 1s cubic-bezier(.22,.61,.36,1);
@@ -100,20 +108,21 @@
     }
 
     .page {
-      position: absolute;
+      position: relative;
       inset: 0;
+      min-height: 100vh;
       backface-visibility: hidden;
-      overflow: hidden;
+      overflow: visible;
     }
 
     .page-content {
-      position: absolute;
+      position: relative;
       inset: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      padding: 0;
+      padding: 160px 0 80px 0;
       backface-visibility: hidden;
     }
 
@@ -142,13 +151,14 @@
     .ms-header {
       display: flex;
       flex-wrap: wrap;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
-      gap: 16px;
+      gap: 18px;
       margin-bottom: 16px;
     }
 
     .minesweeper-panel h2 {
+      display: none;
       margin: 0;
       font-size: clamp(1.8rem, 2.4vw, 2.6rem);
       letter-spacing: 0.06em;
@@ -160,20 +170,13 @@
       gap: 12px;
       align-items: center;
       font-size: 0.95rem;
-      color: #c7f8ff;
+      color: #0f3860;
+      justify-content: flex-end;
+      width: 100%;
     }
 
     .ms-message {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 14px;
-      border-radius: 999px;
-      background: rgba(0, 255, 255, 0.08);
-      border: 1px solid rgba(0, 255, 255, 0.14);
-      color: #e1ffff;
-      min-width: 120px;
-      justify-content: center;
+      display: none;
     }
 
     .ms-controls {
@@ -208,7 +211,7 @@
       width: 100%;
       grid-template-columns: repeat(var(--cols), minmax(30px, 1fr));
       padding: 8px;
-      background: transparent;
+      background: white;
       border: 1px solid #0099ff;
       border-radius: 12px;
       box-sizing: border-box;
@@ -261,17 +264,11 @@
     }
 
     .ms-help {
-      margin: 18px 0 0;
-      font-size: 0.95rem;
-      color: #b2e8ff;
-      text-align: center;
+      display: none;
     }
 
     .ms-footer {
-      margin-top: 14px;
-      text-align: center;
-      color: #9fdcff;
-      font-size: 0.95rem;
+      display: none;
     }
 
     #flip-toggle {
@@ -326,22 +323,12 @@
           <!--웹 타이틀!-->
           <h1>DE-PS</h1>
           <div class="white-panel">
-            <p>Turn on your cell phone at that time. And turn on Google Maps. Is the blue dot that exists as if it is really you? Does it say exactly where you are? GPS systems are not an absolute exact location, but rather an infinite number of mine-like errors and fierce flagging to address them.</p>
             <div class="minesweeper-panel">
-            <div class="ms-header">
-              <h2>MINESWEEPER</h2>
-              <div class="ms-status">
-                <span id="ms-message" class="ms-message">Flag mode active</span>
-                <span class="ms-tile-count">Mines: <strong id="mine-count">10</strong></span>
-                <span class="ms-timer">Time: <strong id="timer">0</strong>s</span>
+              <div class="ms-controls">
+                <button class="ms-button ms-flag-toggle active" id="flag-toggle">Flag Mode On</button>
               </div>
+              <div id="ms-board" class="ms-board"></div>
             </div>
-            <div class="ms-controls">
-              <button class="ms-button ms-reset" id="reset-button">Reset</button>
-              <button class="ms-button ms-flag-toggle active" id="flag-toggle">Flag Mode On</button>
-            </div>
-            <div id="ms-board" class="ms-board"></div>
-          </div>
         </div>
       </section>
 
@@ -433,10 +420,6 @@ resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
 const boardContainer = document.getElementById('ms-board');
-const mineCountEl = document.getElementById('mine-count');
-const timerEl = document.getElementById('timer');
-const messageEl = document.getElementById('ms-message');
-const resetButton = document.getElementById('reset-button');
 const flagToggle = document.getElementById('flag-toggle');
 
 const difficulties = {
@@ -448,31 +431,12 @@ let cols = 9;
 let mineCount = 10;
 let board = [];
 let firstMove = true;
-let timer = 0;
-let timerInterval = null;
 let flags = 0;
 let gameOver = false;
 let flagMode = false;
 
-function startTimer() {
-  stopTimer();
-  timer = 0;
-  timerEl.textContent = timer;
-  timerInterval = setInterval(() => {
-    timer += 1;
-    timerEl.textContent = timer;
-  }, 1000);
-}
-
-function stopTimer() {
-  if (timerInterval) {
-    clearInterval(timerInterval);
-    timerInterval = null;
-  }
-}
-
 function setMessage(text) {
-  messageEl.textContent = text;
+  // status text is hidden; no user-facing description needed
 }
 
 function initGame(settings) {
@@ -484,8 +448,6 @@ function initGame(settings) {
   flagMode = true;
   flags = 0;
   board = [];
-  mineCountEl.textContent = mineCount;
-  timerEl.textContent = '0';
   setMessage('Flag mode active');
   flagToggle.classList.add('active');
   flagToggle.textContent = 'Flag Mode On';
@@ -678,10 +640,6 @@ boardContainer.addEventListener('contextmenu', (event) => {
   const r = Number(target.dataset.row);
   const c = Number(target.dataset.col);
   toggleFlag(r, c);
-});
-
-resetButton.addEventListener('click', () => {
-  initGame(difficulties.beginner);
 });
 
 flagToggle.addEventListener('click', () => {
