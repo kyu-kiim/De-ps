@@ -11,48 +11,29 @@
     body {
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'MS Sans Serif', Arial, sans-serif;
       overflow-x: hidden;
       overflow-y: auto;
+      background: #c0c0c0;
     }
 
-#background {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  perspective: 1000px;
-  z-index: -1;
+    #background {
+      display: none;
+    }
 
-  transform-style: preserve-3d;
-}
+    .plane {
+      display: none;
+    }
 
-.plane {
-  position: absolute;
-  width: 175px;
-  height: 300px;
-  background: blue;
-  transform-style: preserve-3d;
-  transform: translateX(var(--tx)) translateY(var(--ty)) rotateX(var(--rx)) rotateZ(var(--tz));
-}
     h1 {
-      margin: 0;
-      padding: 0 20px 20px 20px;
-      color: black;
-      text-align: center;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      font-size: 120px;
+      display: none;
     }
+
     .white-panel {
-      margin: 0 auto;
-      width: min(900px, calc(100% - 40px));
-      padding: 32px 26px 26px;
-      background: white;
+      margin: 20px auto;
+      width: auto;
+      padding: 8px;
+      background: transparent;
       color: black;
       text-align: center;
       position: relative;
@@ -60,36 +41,16 @@
       left: 0;
       right: 0;
       z-index: 1000;
-      font-size: 20px;
-      border-radius: 18px;
-      box-shadow: 0 18px 48px rgba(0,0,0,0.12);
-    }
-    .white-panel p {
-      margin: 0 0 24px 0;
-      padding: 0;
-      color: black;
-      background: transparent;
-      font-size: 20px;
-      line-height: 1.6;
-    }
-    #grid-canvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -2;
+      font-size: 12px;
     }
 
-    html, body {
-      min-height: 100vh;
-      height: auto;
-      overflow-x: hidden;
+    #grid-canvas {
+      display: none;
     }
 
     .scene {
       position: relative;
-      width: 100vw;
+      width: 100%;
       min-height: 100vh;
       perspective: 1200px;
       overflow: visible;
@@ -122,7 +83,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      padding: 160px 0 80px 0;
+      padding: 20px 0 80px 0;
       backface-visibility: hidden;
     }
 
@@ -139,7 +100,7 @@
     }
 
     .minesweeper-panel {
-      width: 100%;
+      width: auto;
       margin: 0;
       padding: 0;
       background: transparent;
@@ -149,30 +110,15 @@
     }
 
     .ms-header {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 18px;
-      margin-bottom: 16px;
+      display: none;
     }
 
     .minesweeper-panel h2 {
       display: none;
-      margin: 0;
-      font-size: clamp(1.8rem, 2.4vw, 2.6rem);
-      letter-spacing: 0.06em;
     }
 
     .ms-status {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-      font-size: 0.95rem;
-      color: #0f3860;
-      justify-content: flex-end;
-      width: 100%;
+      display: none;
     }
 
     .ms-message {
@@ -180,87 +126,77 @@
     }
 
     .ms-controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      justify-content: center;
-      margin-bottom: 18px;
+      display: none;
     }
 
     .ms-button {
-      border: 1px solid rgba(0, 255, 255, 0.16);
-      background: rgba(0, 255, 255, 0.06);
-      color: #e5f7ff;
-      padding: 12px 16px;
-      border-radius: 14px;
-      cursor: pointer;
-      font-size: 0.95rem;
-      transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
-    }
-
-    .ms-button:hover,
-    .ms-button.active {
-      background: rgba(0, 255, 255, 0.18);
-      border-color: rgba(0, 255, 255, 0.28);
-      transform: translateY(-1px);
+      display: none;
     }
 
     .ms-board {
       display: grid;
-      gap: 4px;
-      width: 100%;
-      grid-template-columns: repeat(var(--cols), minmax(30px, 1fr));
-      padding: 8px;
-      background: white;
-      border: 1px solid #0099ff;
-      border-radius: 12px;
+      gap: 0;
+      width: auto;
+      grid-template-columns: repeat(var(--cols), 20px);
+      padding: 0;
+      background: #c0c0c0;
+      border: none;
+      border-radius: 0;
       box-sizing: border-box;
+      margin: 0 auto;
     }
 
     .ms-cell {
-      width: 34px;
-      height: 34px;
-      border-radius: 8px;
-      border: 1px solid rgba(0, 255, 255, 0.12);
-      background: rgba(1, 17, 36, 0.96);
-      color: #dbf9ff;
-      font-size: 0.95rem;
-      font-weight: 700;
+      width: 20px;
+      height: 20px;
+      border-radius: 0;
+      border: 1px solid;
+      border-color: #dfdfdf #404040 #404040 #dfdfdf;
+      background: #c0c0c0;
+      color: #0000ff;
+      font-size: 12px;
+      font-weight: bold;
       cursor: pointer;
       display: grid;
       place-items: center;
       user-select: none;
-      transition: transform 0.1s ease, background 0.2s ease, box-shadow 0.2s ease;
+      transition: none;
+      padding: 0;
+      font-family: 'MS Sans Serif', sans-serif;
     }
 
     .ms-cell:hover {
-      transform: translateY(-1px);
-      background: rgba(0, 255, 255, 0.08);
+      transform: none;
+      background: #c0c0c0;
     }
 
     .ms-cell.revealed {
-      background: rgba(3, 50, 85, 0.96);
-      border-color: rgba(0, 255, 255, 0.2);
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+      background: #c0c0c0;
+      border-color: #808080;
+      border: 1px solid #808080;
       cursor: default;
+      box-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #404040;
     }
 
     .ms-cell.revealed.mine {
-      background: rgba(255, 62, 62, 0.95);
-      color: #fff;
-      text-shadow: 0 0 12px rgba(255, 62, 62, 0.85);
+      background: #c0c0c0;
+      color: #000;
+      text-shadow: none;
+      font-weight: bold;
     }
 
     .ms-cell.flagged {
       position: relative;
-      background: rgba(12, 54, 79, 0.96);
+      background: #c0c0c0;
+      border-color: #dfdfdf #404040 #404040 #dfdfdf;
+      border: 1px solid;
     }
 
     .ms-cell.flagged::after {
-      content: '⚑';
-      font-size: 1rem;
-      color: #ffdd59;
-      text-shadow: 0 0 8px rgba(255, 221, 89, 0.8);
+      content: '🚩';
+      font-size: 10px;
+      color: #ff0000;
+      text-shadow: none;
     }
 
     .ms-help {
@@ -272,44 +208,19 @@
     }
 
     #flip-toggle {
-      position: fixed;
-      top: 24px;
-      right: 24px;
-      z-index: 1002;
-      appearance: none;
-      border: 1px solid rgba(255,255,255,0.25);
-      background: rgba(255,255,255,0.06);
-      color: #fff;
-      padding: 14px 18px;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: transform 0.2s ease, background 0.2s ease;
-    }
-
-    #flip-toggle:hover {
-      transform: translateY(-2px);
+      display: none;
     }
 
     .back-panel {
-      width: min(900px, calc(100% - 60px));
-      margin: 60px auto 0;
-      padding: 40px;
-      border: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 0 40px 120px rgba(0,0,0,0.45);
-      color: #e5f7ff;
-      display: grid;
-      gap: 20px;
+      display: none;
     }
 
     .back-panel h1 {
-      margin: 0;
-      font-size: clamp(3rem, 5vw, 5rem);
-      letter-spacing: -0.07em;
+      display: none;
     }
 
     .back-panel p {
-      margin: 0;
-      line-height: 1.8;
+      display: none;
     }
   </style>
 </head>
@@ -318,109 +229,19 @@
     <div class="card" id="flip-card">
       <section class="page front">
         <div class="page-content">
-          <canvas id="grid-canvas"></canvas>
-          <div id="background"></div>
-          <!--웹 타이틀!-->
-          <h1>DE-PS</h1>
           <div class="white-panel">
             <div class="minesweeper-panel">
-              <div class="ms-controls">
-                <button class="ms-button ms-flag-toggle active" id="flag-toggle">Flag Mode On</button>
-              </div>
               <div id="ms-board" class="ms-board"></div>
             </div>
-        </div>
-      </section>
-
-      <section class="page back">
-        <div class="page-content">
-          <div class="back-panel">
-            <h1>Back Side</h1>
-            <p>This is still the same document, but flipped to a new face. The content is layered in 3D instead of loading a new page.</p>
           </div>
         </div>
       </section>
     </div>
   </div>
-  <button id="flip-toggle">Flip</button>
 
 <script>
-const background = document.getElementById('background');
-const planeSize = 200;
-const spacing = 200;
-const numX = Math.ceil(window.innerWidth / spacing) + 2;
-const numY = Math.ceil(window.innerHeight / spacing) + 2;
-for (let i = -1; i < numX; i++) {
-  for (let j = -1; j < numY; j++) {
-    const plane = document.createElement('div');
-    plane.className = 'plane';
-    plane.style.setProperty('--tx', i * spacing + 'px');
-    plane.style.setProperty('--ty', j * spacing + 'px');
-    background.appendChild(plane);
-  }
-}
-
-let rotateZ = 0;
-let rotateX = 45;
-let direction = 1;
-
-function animate() {
-  rotateZ += direction * 1.5;
-  rotateX += direction * 0.75;
-  document.documentElement.style.setProperty('--tz', rotateZ + 'deg');
-  document.documentElement.style.setProperty('--rx', rotateX + 'deg');
-  requestAnimationFrame(animate);
-}
-
-animate();
-
-window.addEventListener('wheel', (e) => {
-  direction = e.deltaY > 0 ? 1 : -1;
-});
-
-// Draw neon grid
-const canvas = document.getElementById('grid-canvas');
-const ctx = canvas.getContext('2d');
-
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  drawGrid();
-}
-
-function drawGrid() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-  // Neon cyan color
-  ctx.strokeStyle = '#00ffff';
-  ctx.shadowColor = '#00ffff';
-  ctx.shadowBlur = 5;
-  ctx.lineWidth = 1;
-  
-  const gridSpacing = 50;
-  
-  // Draw vertical lines
-  for (let x = 0; x < canvas.width; x += gridSpacing) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, canvas.height);
-    ctx.stroke();
-  }
-  
-  // Draw horizontal lines
-  for (let y = 0; y < canvas.height; y += gridSpacing) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(canvas.width, y);
-    ctx.stroke();
-  }
-}
-
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
 
 const boardContainer = document.getElementById('ms-board');
-const flagToggle = document.getElementById('flag-toggle');
 
 const difficulties = {
   beginner: { rows: 9, cols: 9, mines: 10 },
@@ -457,8 +278,6 @@ function initGame(settings) {
   flags = 0;
   board = [];
   setMessage('Flag mode active');
-  flagToggle.classList.add('active');
-  flagToggle.textContent = 'Flag Mode On';
   boardContainer.style.setProperty('--cols', cols);
   stopTimer();
   createBoard();
@@ -572,8 +391,7 @@ function toggleFlag(r, c) {
 }
 
 function updateFlagCount() {
-  const remaining = Math.max(0, mineCount - flags);
-  mineCountEl.textContent = remaining;
+  // mine count display removed
 }
 
 function revealAllMines(showAll = false) {
@@ -619,7 +437,8 @@ function renderBoard() {
           button.textContent = '💣';
         } else if (cell.adjacent > 0) {
           button.textContent = cell.adjacent;
-          button.style.color = ['#8efeff', '#7ad7ff', '#90ff8c', '#ffcc5c', '#ff8c6d', '#e46aff', '#fef57b', '#ffffff'][cell.adjacent - 1] || '#ffffff';
+          const colors = ['#0000ff', '#009900', '#ff0000', '#000080', '#800000', '#008080', '#000000', '#808080'];
+          button.style.color = colors[cell.adjacent - 1] || '#000000';
         }
       } else if (cell.flagged) {
         button.classList.add('flagged');
@@ -650,28 +469,9 @@ boardContainer.addEventListener('contextmenu', (event) => {
   toggleFlag(r, c);
 });
 
-flagToggle.addEventListener('click', () => {
-  flagMode = !flagMode;
-  flagToggle.classList.toggle('active', flagMode);
-  flagToggle.textContent = flagMode ? 'Flag Mode On' : 'Flag Mode';
-  setMessage(flagMode ? 'Flag mode active' : 'Ready');
-});
-
 initGame(difficulties.beginner);
 
 const flipCard = document.getElementById('flip-card');
-const flipToggle = document.getElementById('flip-toggle');
-
-flipToggle.addEventListener('click', () => {
-  flipCard.classList.toggle('is-flipped');
-  if (flipCard.classList.contains('is-flipped')) {
-    document.body.style.overflow = 'hidden';
-    flipToggle.textContent = 'Flip Back';
-  } else {
-    document.body.style.overflow = '';
-    flipToggle.textContent = 'Flip';
-  }
-});
 </script>
 
 </body>
