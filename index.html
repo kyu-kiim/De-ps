@@ -100,8 +100,13 @@
     }
 
     .minesweeper-panel {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 16px;
+      width: 100%;
       position: relative;
-      width: auto;
       margin: 0;
       padding: 0;
       background: transparent;
@@ -136,17 +141,18 @@
     .hover-info {
       display: none;
       position: relative;
-      width: 100%;
-      padding: 10px 12px;
-      margin-bottom: 10px;
-      background: #f6f6f6;
-      border: 1px solid #a0a0a0;
-      border-radius: 4px;
+      flex: 0 0 340px;
+      padding: 12px 14px;
+      margin-bottom: 0;
+      background: transparent;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 8px;
       color: #000;
       font-family: 'MS Sans Serif', sans-serif;
-      box-shadow: inset 1px 1px 0 rgba(255,255,255,0.8);
       text-align: left;
       overflow: hidden;
+      min-height: 300px;
+      box-sizing: border-box;
     }
 
     .hover-info.visible {
@@ -155,7 +161,7 @@
 
     .hover-name {
       font-size: 60pt;
-      line-height: 1;
+      line-height: 0.9;
       margin-left: 60pt;
       margin-bottom: 10px;
       white-space: nowrap;
@@ -165,27 +171,28 @@
 
     .hover-text {
       font-size: 30pt;
-      line-height: 1.1;
+      line-height: 1.05;
       margin-left: 60pt;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      max-width: 100%;
       white-space: normal;
     }
 
     .hover-meta {
       font-size: 14px;
       margin-left: 60pt;
+      margin-bottom: 4px;
     }
 
     .hover-link {
+      flex: 0 0 180px;
       display: none;
-      position: fixed;
-      right: 20px;
-      bottom: 20px;
-      width: 140px;
-      height: 140px;
+      align-self: flex-start;
+      width: 180px;
+      height: 180px;
       opacity: 0;
       transition: opacity 0.2s ease;
-      z-index: 1000;
+      z-index: 1;
     }
 
     .hover-link.visible {
@@ -197,20 +204,9 @@
       width: 100%;
       height: 100%;
       object-fit: contain;
-      border: 1px solid #999;
-      background: #fff;
+      border: 1px solid rgba(0, 0, 0, 0.12);
       border-radius: 8px;
-    }
-
-    .hover-link.visible {
-      display: block;
-      opacity: 1;
-    }
-
-    .hover-link img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
+      background: rgba(255,255,255,0.7);
     }
 
     .ms-button {
@@ -372,6 +368,22 @@ function generateRandomGrid() {
 
 const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSy4u5g38yzruaKY4dT3KzIps8zHhBbJ_TTwKqSWLeRvkSZRrhRsii6hTZtsfcnhl79gyxdAodJ1BxW/pub?gid=2084734993&single=true&output=csv';
 let csvItems = [];
+const selectedHoverItems = {
+  flag: null,
+  bomb: null,
+  apply: null,
+  number: null
+};
+
+function normalizeForm(value) {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized.includes('깃발') || normalized.includes('flag')) return 'flag';
+  if (normalized.includes('지뢰') || normalized.includes('bomb') || normalized.includes('방해')) return 'bomb';
+  if (normalized.includes('적용') || normalized.includes('apply')) return 'apply';
+  if (normalized.includes('숫자') || normalized.includes('number') || normalized.includes('정보')) return 'number';
+  return null;
+}
 
 function parseCsv(text) {
   const rows = text.trim().split(/\r?\n/).map(line => {
@@ -413,8 +425,40 @@ async function fetchCsvData() {
   }
 }
 
-function getHoverItem() {
-  if (csvItems.length === 0) {
+function chooseHoverItems() {
+  const groups = {
+    flag: [],
+    bomb: [],
+    apply: [],
+    number: []
+  };
+
+  csvItems.forEach(item => {
+    const category = normalizeForm(item.form || item.type || item.name);
+    if (category && groups[category]) {
+      groups[category].push(item);
+    }
+  });
+
+  Object.keys(groups).forEach(category => {
+    const pool = groups[category];
+    if (pool.length > 0) {
+      selectedHoverItems[category] = pool[Math.floor(Math.random() * pool.length)];
+    } else {
+      selectedHoverItems[category] = {
+        name: category.toUpperCase(),
+        text: `${category} 항목 정보가 없습니다.`,
+        type: category,
+        role: category,
+        img: '',
+        link: 'https://www.google.com'
+      };
+    }
+  });
+}
+
+function getHoverItem(type) {
+  if (!type || !selectedHoverItems[type]) {
     return {
       name: 'NO DATA',
       text: 'CSV가 아직 로드되지 않았거나 항목이 없습니다.',
@@ -424,7 +468,7 @@ function getHoverItem() {
       link: 'https://www.google.com'
     };
   }
-  return csvItems[Math.floor(Math.random() * csvItems.length)];
+  return selectedHoverItems[type];
 }
 
 function showHoverInfo(item) {
@@ -699,8 +743,28 @@ boardContainer.addEventListener('contextmenu', (event) => {
 boardContainer.addEventListener('mouseover', (event) => {
   const cellButton = event.target.closest('.ms-cell');
   if (!cellButton || !boardContainer.contains(cellButton)) return;
-  event.preventDefault();
-  showHoverInfo(getHoverItem());
+  const r = Number(cellButton.dataset.row);
+  const c = Number(cellButton.dataset.col);
+  const cell = board[r][c];
+  let hoverType = null;
+
+  if (cell.flagged) {
+    hoverType = 'flag';
+  } else if (cell.revealed) {
+    if (cell.mine) {
+      hoverType = 'bomb';
+    } else if (cell.adjacent > 0) {
+      hoverType = 'number';
+    } else {
+      hoverType = 'apply';
+    }
+  }
+
+  if (hoverType) {
+    showHoverInfo(getHoverItem(hoverType));
+  } else {
+    hideHoverInfo();
+  }
 });
 
 boardContainer.addEventListener('mouseout', (event) => {
@@ -713,6 +777,7 @@ boardContainer.addEventListener('mouseout', (event) => {
 
 fetchCsvData().then(items => {
   csvItems = items;
+  chooseHoverItems();
   initGame(generateRandomGrid());
 });
 
