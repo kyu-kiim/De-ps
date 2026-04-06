@@ -11,8 +11,6 @@
     body {
       margin: 0;
       padding: 0;
-      background: #02030a;
-      color: #e5f7ff;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       overflow-x: hidden;
     }
@@ -40,7 +38,7 @@
     h1 {
       margin: 0;
       padding: 0 20px 20px 20px;
-      color: #e5f7ff;
+      color: black;
       text-align: center;
       position: fixed;
       top: 0;
@@ -48,24 +46,29 @@
       right: 0;
       z-index: 1000;
       font-size: 120px;
-      text-shadow: 0 0 32px rgba(0, 255, 255, 0.15);
     }
-    p {
-      margin: 0;
+    .white-panel {
+      margin: 0 auto;
+      width: min(900px, calc(100% - 40px));
       padding: 20px;
-      color: #e5f7ff;
+      background: white;
+      color: black;
       text-align: center;
       position: relative;
       top: 500px;
       left: 0;
       right: 0;
-      background: rgba(0, 0, 0, 0.72);
       z-index: 1000;
       font-size: 20px;
       border-radius: 18px;
-      max-width: 960px;
-      margin-left: auto;
-      margin-right: auto;
+    }
+    .white-panel p {
+      margin: 0 0 24px 0;
+      padding: 0;
+      color: black;
+      background: transparent;
+      font-size: 20px;
+      line-height: 1.6;
     }
     #grid-canvas {
       position: fixed;
@@ -127,14 +130,13 @@
     }
 
     .minesweeper-panel {
-      width: min(760px, calc(100% - 40px));
-      margin: 40px auto 80px;
-      padding: 24px;
-      background: rgba(2, 10, 26, 0.94);
-      border: 1px solid rgba(0, 255, 255, 0.18);
-      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
-      border-radius: 22px;
-      backdrop-filter: blur(14px);
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      border-radius: 0;
     }
 
     .ms-header {
@@ -175,9 +177,10 @@
     }
 
     .ms-controls {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      display: flex;
+      flex-wrap: wrap;
       gap: 12px;
+      justify-content: center;
       margin-bottom: 18px;
     }
 
@@ -202,12 +205,13 @@
     .ms-board {
       display: grid;
       gap: 4px;
-      justify-content: center;
+      width: 100%;
       grid-template-columns: repeat(var(--cols), minmax(30px, 1fr));
       padding: 8px;
-      background: rgba(0, 0, 0, 0.15);
-      border: 1px solid rgba(0, 255, 255, 0.14);
-      border-radius: 18px;
+      background: transparent;
+      border: 1px solid #0099ff;
+      border-radius: 12px;
+      box-sizing: border-box;
     }
 
     .ms-cell {
@@ -321,25 +325,22 @@
           <div id="background"></div>
           <!--웹 타이틀!-->
           <h1>DE-PS</h1>
-          <p>Turn on your cell phone at that time. And turn on Google Maps. Is the blue dot that exists as if it is really you? Does it say exactly where you are? GPS systems are not an absolute exact location, but rather an infinite number of mine-like errors and fierce flagging to address them.</p>
-          <div class="minesweeper-panel">
+          <div class="white-panel">
+            <p>Turn on your cell phone at that time. And turn on Google Maps. Is the blue dot that exists as if it is really you? Does it say exactly where you are? GPS systems are not an absolute exact location, but rather an infinite number of mine-like errors and fierce flagging to address them.</p>
+            <div class="minesweeper-panel">
             <div class="ms-header">
               <h2>MINESWEEPER</h2>
               <div class="ms-status">
-                <span id="ms-message" class="ms-message">Ready</span>
+                <span id="ms-message" class="ms-message">Flag mode active</span>
                 <span class="ms-tile-count">Mines: <strong id="mine-count">10</strong></span>
                 <span class="ms-timer">Time: <strong id="timer">0</strong>s</span>
               </div>
             </div>
             <div class="ms-controls">
-              <button class="ms-button active" data-difficulty="beginner">Beginner</button>
-              <button class="ms-button" data-difficulty="intermediate">Intermediate</button>
-              <button class="ms-button" data-difficulty="expert">Expert</button>
               <button class="ms-button ms-reset" id="reset-button">Reset</button>
-              <button class="ms-button ms-flag-toggle" id="flag-toggle">Flag Mode</button>
+              <button class="ms-button ms-flag-toggle active" id="flag-toggle">Flag Mode On</button>
             </div>
             <div id="ms-board" class="ms-board"></div>
-            <p class="ms-help">Left click to reveal. Right click or toggle Flag Mode and click to mark mines.</p>
           </div>
         </div>
       </section>
@@ -437,12 +438,9 @@ const timerEl = document.getElementById('timer');
 const messageEl = document.getElementById('ms-message');
 const resetButton = document.getElementById('reset-button');
 const flagToggle = document.getElementById('flag-toggle');
-const difficultyButtons = document.querySelectorAll('.ms-button[data-difficulty]');
 
 const difficulties = {
   beginner: { rows: 9, cols: 9, mines: 10 },
-  intermediate: { rows: 16, cols: 16, mines: 40 },
-  expert: { rows: 16, cols: 24, mines: 99 },
 };
 
 let rows = 9;
@@ -483,13 +481,14 @@ function initGame(settings) {
   mineCount = settings.mines;
   firstMove = true;
   gameOver = false;
-  flagMode = false;
+  flagMode = true;
   flags = 0;
   board = [];
   mineCountEl.textContent = mineCount;
   timerEl.textContent = '0';
-  setMessage('Ready');
-  flagToggle.classList.remove('active');
+  setMessage('Flag mode active');
+  flagToggle.classList.add('active');
+  flagToggle.textContent = 'Flag Mode On';
   boardContainer.style.setProperty('--cols', cols);
   stopTimer();
   createBoard();
@@ -682,7 +681,7 @@ boardContainer.addEventListener('contextmenu', (event) => {
 });
 
 resetButton.addEventListener('click', () => {
-  initGame(difficulties[document.querySelector('.ms-button.active')?.dataset.difficulty || 'beginner']);
+  initGame(difficulties.beginner);
 });
 
 flagToggle.addEventListener('click', () => {
@@ -690,14 +689,6 @@ flagToggle.addEventListener('click', () => {
   flagToggle.classList.toggle('active', flagMode);
   flagToggle.textContent = flagMode ? 'Flag Mode On' : 'Flag Mode';
   setMessage(flagMode ? 'Flag mode active' : 'Ready');
-});
-
-difficultyButtons.forEach((button) => {
-  button.addEventListener('click', () => {
-    difficultyButtons.forEach((btn) => btn.classList.remove('active'));
-    button.classList.add('active');
-    initGame(difficulties[button.dataset.difficulty]);
-  });
 });
 
 initGame(difficulties.beginner);
