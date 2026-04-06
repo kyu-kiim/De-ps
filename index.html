@@ -190,8 +190,8 @@
       position: fixed;
       right: 20px;
       bottom: 20px;
-      width: 180px;
-      height: 180px;
+      width: 360px;
+      height: 360px;
       opacity: 0;
       transition: opacity 0.2s ease;
       z-index: 1000;
@@ -391,6 +391,23 @@ function isDirectImageUrl(url) {
   return /\.(jpe?g|png|gif|webp|svg)(\?|$)/i.test(String(url || ''));
 }
 
+function getDrivePreviewUrl(url) {
+  const stringUrl = String(url || '');
+  const match = stringUrl.match(/\/file\/d\/([^\/]+)\//) || stringUrl.match(/[?&]id=([^&]+)/);
+  if (match) {
+    return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+  }
+  return null;
+}
+
+function getImageUrl(url) {
+  if (!url) return '';
+  if (isDirectImageUrl(url)) return url;
+  const driveUrl = getDrivePreviewUrl(url);
+  if (driveUrl) return driveUrl;
+  return '';
+}
+
 function parseCsv(text) {
   const rows = text.trim().split(/\r?\n/).map(line => {
     const cells = [];
@@ -518,11 +535,12 @@ function showHoverInfo(item) {
   hoverRole.textContent = `Role: ${item.role || ''}`;
   hoverSearch.href = item.link || 'https://www.google.com';
 
-  const placeholderImage = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="180" height="180"%3E%3Crect width="180" height="180" fill="%23f0f0f0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-size="14" fill="%23999"%3ELink%3C/text%3E%3C/svg%3E';
-  if (item.img && isDirectImageUrl(item.img)) {
-    if (hoverImage.dataset.src !== item.img) {
-      hoverImage.src = item.img;
-      hoverImage.dataset.src = item.img;
+  const placeholderImage = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="360" height="360"%3E%3Crect width="360" height="360" fill="%23f0f0f0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-size="18" fill="%23999"%3ELink%3C/text%3E%3C/svg%3E';
+  const imageUrl = getImageUrl(item.img);
+  if (imageUrl) {
+    if (hoverImage.dataset.src !== imageUrl) {
+      hoverImage.src = imageUrl;
+      hoverImage.dataset.src = imageUrl;
     }
     hoverImage.alt = item.name || 'hover image';
     hoverLink.classList.add('visible');
@@ -700,6 +718,18 @@ function floodReveal(r, c) {
 function toggleFlag(r, c) {
   if (gameOver) return;
   const cell = board[r][c];
+  if (cell.revealed && cell.mine) {
+    cell.flagged = true;
+    cell.mine = false;
+    updateAdjacencies();
+    if (countMinesRemaining() === 0) {
+      revealAllCells();
+      gameOver = true;
+      setMessage('Game Over');
+    }
+    renderBoard();
+    return;
+  }
   if (cell.revealed) return;
   cell.flagged = !cell.flagged;
   flags += cell.flagged ? 1 : -1;
@@ -721,6 +751,33 @@ function revealAllMines(showAll = false) {
       if (showAll && !cell.mine && cell.flagged) {
         cell.flagged = false;
       }
+    }
+  }
+}
+
+function updateAdjacencies() {
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (board[r][c].mine) continue;
+      board[r][c].adjacent = getNeighbors(r, c).filter(({ r: nr, c: nc }) => board[nr][nc].mine).length;
+    }
+  }
+}
+
+function countMinesRemaining() {
+  let count = 0;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (board[r][c].mine) count += 1;
+    }
+  }
+  return count;
+}
+
+function revealAllCells() {
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      board[r][c].revealed = true;
     }
   }
 }
