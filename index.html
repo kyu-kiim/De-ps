@@ -145,26 +145,61 @@
       color: #000;
       font-family: 'MS Sans Serif', sans-serif;
       box-shadow: inset 1px 1px 0 rgba(255,255,255,0.8);
+      text-align: left;
+      overflow: hidden;
     }
 
     .hover-info.visible {
       display: block;
     }
 
-    .hover-info div {
-      margin: 4px 0;
-      font-size: 12px;
+    .hover-name {
+      font-size: 60pt;
+      line-height: 1;
+      margin-left: 60pt;
+      margin-bottom: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .hover-text {
+      font-size: 30pt;
+      line-height: 1.1;
+      margin-left: 60pt;
+      margin-bottom: 10px;
+      white-space: normal;
+    }
+
+    .hover-meta {
+      font-size: 14px;
+      margin-left: 60pt;
     }
 
     .hover-link {
       display: none;
-      position: absolute;
-      right: 10px;
-      bottom: 8px;
-      width: 90px;
-      height: 28px;
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      width: 140px;
+      height: 140px;
       opacity: 0;
       transition: opacity 0.2s ease;
+      z-index: 1000;
+    }
+
+    .hover-link.visible {
+      display: block;
+      opacity: 1;
+    }
+
+    .hover-link img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border: 1px solid #999;
+      background: #fff;
+      border-radius: 8px;
     }
 
     .hover-link.visible {
@@ -300,14 +335,15 @@
                 <button class="ms-button active" id="flag-toggle">Flag: ON</button>
               </div>
               <div id="hover-info" class="hover-info">
-                <div id="hover-text">Hover over a flag, bomb, or number.</div>
-                <div id="hover-type"></div>
-                <div id="hover-role"></div>
+                <div id="hover-name" class="hover-name">Hover over a cell</div>
+                <div id="hover-text" class="hover-text">현재 CSV 데이터가 로드되면 이곳에 text 항목이 표시됩니다.</div>
+                <div id="hover-type" class="hover-meta"></div>
+                <div id="hover-role" class="hover-meta"></div>
               </div>
               <div id="ms-board" class="ms-board"></div>
               <div id="hover-link" class="hover-link">
                 <a id="hover-search" href="https://www.google.com" target="_blank" rel="noopener noreferrer">
-                  <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_74x24dp.png" alt="Google Search">
+                  <img id="hover-image" src="" alt="hover image">
                 </a>
               </div>
             </div>
@@ -334,11 +370,11 @@ function generateRandomGrid() {
   return { rows, cols, mines };
 }
 
-const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSy4u5g38yzruaKY4dT3KzIps8zHhBbJ_TTwKqSWLeRvkSZRrhRsii6hTZtsfcnhl79gyxdAodJ1BxW/pub?gid=260719620&single=true&output=csv';
-const csvItemsByType = { flag: [], bomb: [], apply: [], number: [] };
+const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSy4u5g38yzruaKY4dT3KzIps8zHhBbJ_TTwKqSWLeRvkSZRrhRsii6hTZtsfcnhl79gyxdAodJ1BxW/pub?gid=2084734993&single=true&output=csv';
+let csvItems = [];
 
 function parseCsv(text) {
-  return text.trim().split(/\r?\n/).map(line => {
+  const rows = text.trim().split(/\r?\n/).map(line => {
     const cells = [];
     let current = '';
     let insideQuotes = false;
@@ -356,77 +392,68 @@ function parseCsv(text) {
     cells.push(current.trim());
     return cells;
   });
-}
 
-function classifyCellValue(value) {
-  const normalized = value.trim().toLowerCase();
-  if (!normalized) return null;
-  if (normalized.includes('flag') || normalized.includes('깃발')) return 'flag';
-  if (normalized.includes('bomb') || normalized.includes('지뢰') || normalized.includes('폭탄')) return 'bomb';
-  if (normalized.includes('apply') || normalized.includes('적용')) return 'apply';
-  if (/\d+/.test(normalized)) return 'number';
-  return null;
-}
-
-function mapCsvToItems(rows) {
-  const items = [];
-  rows.forEach((cells, rowIndex) => {
-    cells.forEach((cell, colIndex) => {
-      const type = classifyCellValue(cell);
-      if (!type) return;
-      const role = type === 'flag' ? 'marker' : type === 'bomb' ? 'explosive' : type === 'apply' ? 'action' : 'digit';
-      items.push({ type, label: cell, role, row: rowIndex, col: colIndex });
+  const header = rows[0] || [];
+  return rows.slice(1).map(cells => {
+    const item = {};
+    header.forEach((key, index) => {
+      item[key.trim().toLowerCase()] = cells[index] || '';
     });
-  });
-  if (items.length === 0) {
-    return [
-      { type: 'flag', label: 'FLAG', role: 'marker' },
-      { type: 'bomb', label: 'BOMB', role: 'explosive' },
-      { type: 'apply', label: 'APPLY', role: 'action' },
-      { type: 'number', label: '7', role: 'digit' },
-      { type: 'number', label: '2', role: 'digit' }
-    ];
-  }
-  return items;
+    return item;
+  }).filter(item => item.name || item.text);
 }
 
 async function fetchCsvData() {
   try {
     const response = await fetch(csvUrl);
     const text = await response.text();
-    return mapCsvToItems(parseCsv(text));
+    return parseCsv(text);
   } catch (error) {
-    return mapCsvToItems([]);
+    return [];
   }
 }
 
-function storeCsvItems(items) {
-  csvItemsByType.flag = items.filter(item => item.type === 'flag');
-  csvItemsByType.bomb = items.filter(item => item.type === 'bomb');
-  csvItemsByType.apply = items.filter(item => item.type === 'apply');
-  csvItemsByType.number = items.filter(item => item.type === 'number');
-}
-
-function getHoverItem(type) {
-  const pool = csvItemsByType[type] || [];
-  if (pool.length === 0) {
-    return { type, label: type.toUpperCase(), role: type === 'number' ? 'digit' : type };
+function getHoverItem() {
+  if (csvItems.length === 0) {
+    return {
+      name: 'NO DATA',
+      text: 'CSV가 아직 로드되지 않았거나 항목이 없습니다.',
+      type: 'unknown',
+      role: 'unknown',
+      img: '',
+      link: 'https://www.google.com'
+    };
   }
-  return pool[Math.floor(Math.random() * pool.length)];
+  return csvItems[Math.floor(Math.random() * csvItems.length)];
 }
 
-function showHoverInfo(type, item) {
+function showHoverInfo(item) {
   const hoverInfo = document.getElementById('hover-info');
+  const hoverName = document.getElementById('hover-name');
   const hoverText = document.getElementById('hover-text');
   const hoverType = document.getElementById('hover-type');
   const hoverRole = document.getElementById('hover-role');
   const hoverSearch = document.getElementById('hover-search');
-  hoverText.textContent = item.label;
-  hoverType.textContent = `Type: ${item.type}`;
-  hoverRole.textContent = `Role: ${item.role}`;
-  hoverSearch.href = `https://www.google.com/search?q=${encodeURIComponent(item.label)}`;
+  const hoverImage = document.getElementById('hover-image');
+  const hoverLink = document.getElementById('hover-link');
+
+  hoverName.textContent = item.name || '';
+  hoverText.textContent = item.text || '';
+  hoverType.textContent = `Type: ${item.type || ''}`;
+  hoverRole.textContent = `Role: ${item.role || ''}`;
+  hoverSearch.href = item.link || 'https://www.google.com';
+
+  if (item.img) {
+    hoverImage.src = item.img;
+    hoverImage.alt = item.name || 'hover image';
+    hoverLink.classList.add('visible');
+  } else {
+    hoverImage.src = '';
+    hoverImage.alt = '';
+    hoverLink.classList.remove('visible');
+  }
+
   hoverInfo.classList.add('visible');
-  document.getElementById('hover-link').classList.add('visible');
 }
 
 function hideHoverInfo() {
@@ -672,34 +699,20 @@ boardContainer.addEventListener('contextmenu', (event) => {
 boardContainer.addEventListener('mouseover', (event) => {
   const cellButton = event.target.closest('.ms-cell');
   if (!cellButton || !boardContainer.contains(cellButton)) return;
-  const r = Number(cellButton.dataset.row);
-  const c = Number(cellButton.dataset.col);
-  const cell = board[r][c];
-  let type = null;
-  if (cell.flagged) {
-    type = 'flag';
-  } else if (cell.revealed && cell.mine) {
-    type = 'bomb';
-  } else if (cell.revealed && cell.adjacent > 0) {
-    type = 'number';
-  } else if (cell.revealed && cell.adjacent === 0) {
-    type = 'apply';
-  }
-  if (type) {
-    showHoverInfo(type, getHoverItem(type));
-  } else {
-    hideHoverInfo();
-  }
+  event.preventDefault();
+  showHoverInfo(getHoverItem());
 });
 
 boardContainer.addEventListener('mouseout', (event) => {
   const cellButton = event.target.closest('.ms-cell');
   if (!cellButton || !boardContainer.contains(cellButton)) return;
-  hideHoverInfo();
+  if (!event.relatedTarget || !cellButton.contains(event.relatedTarget)) {
+    hideHoverInfo();
+  }
 });
 
 fetchCsvData().then(items => {
-  storeCsvItems(items);
+  csvItems = items;
   initGame(generateRandomGrid());
 });
 
