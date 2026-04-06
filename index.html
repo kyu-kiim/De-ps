@@ -468,7 +468,7 @@ function renderBoard() {
         if (cell.mine) {
           button.classList.add('mine');
           const img = document.createElement('img');
-          img.src = 'De-ps/images/bomb.png';
+          img.src = './images/bomb.png';
           img.alt = 'bomb';
           img.style.width = '100%';
           img.style.height = '100%';
@@ -481,7 +481,7 @@ function renderBoard() {
       } else if (cell.flagged) {
         button.classList.add('flagged');
         const img = document.createElement('img');
-        img.src = 'De-ps/images/flag.png';
+        img.src = '.images/flag.png';
         img.alt = 'flag';
         img.style.width = '100%';
         img.style.height = '100%';
