@@ -126,11 +126,31 @@
     }
 
     .ms-controls {
-      display: none;
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 12px;
     }
 
     .ms-button {
-      display: none;
+      padding: 4px 8px;
+      background: #c0c0c0;
+      color: black;
+      border: 1px solid;
+      border-color: #dfdfdf #404040 #404040 #dfdfdf;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: bold;
+      font-family: 'MS Sans Serif', sans-serif;
+      transition: none;
+    }
+
+    .ms-button:active {
+      border-color: #404040 #dfdfdf #dfdfdf #404040;
+    }
+
+    .ms-button.active {
+      border-color: #404040 #dfdfdf #dfdfdf #404040;
     }
 
     .ms-board {
@@ -231,6 +251,9 @@
         <div class="page-content">
           <div class="white-panel">
             <div class="minesweeper-panel">
+              <div class="ms-controls">
+                <button class="ms-button active" id="flag-toggle">Flag: ON</button>
+              </div>
               <div id="ms-board" class="ms-board"></div>
             </div>
           </div>
@@ -242,10 +265,28 @@
 <script>
 
 const boardContainer = document.getElementById('ms-board');
+const flagToggle = document.getElementById('flag-toggle');
 
 const difficulties = {
   beginner: { rows: 9, cols: 9, mines: 10 },
 };
+
+function generateRandomGrid() {
+  const sizes = [
+    { rows: 8, cols: 8, mines: 8 },
+    { rows: 8, cols: 9, mines: 9 },
+    { rows: 9, cols: 8, mines: 9 },
+    { rows: 9, cols: 9, mines: 10 },
+    { rows: 9, cols: 10, mines: 11 },
+    { rows: 10, cols: 9, mines: 11 },
+    { rows: 10, cols: 10, mines: 12 },
+    { rows: 8, cols: 10, mines: 10 },
+    { rows: 10, cols: 8, mines: 10 },
+    { rows: 9, cols: 12, mines: 14 },
+    { rows: 12, cols: 9, mines: 14 },
+  ];
+  return sizes[Math.floor(Math.random() * sizes.length)];
+}
 
 let rows = 9;
 let cols = 9;
@@ -278,6 +319,8 @@ function initGame(settings) {
   flags = 0;
   board = [];
   setMessage('Flag mode active');
+  flagToggle.classList.add('active');
+  flagToggle.textContent = 'Flag: ON';
   boardContainer.style.setProperty('--cols', cols);
   stopTimer();
   createBoard();
@@ -469,9 +512,13 @@ boardContainer.addEventListener('contextmenu', (event) => {
   toggleFlag(r, c);
 });
 
-initGame(difficulties.beginner);
+initGame(generateRandomGrid());
 
-const flipCard = document.getElementById('flip-card');
+flagToggle.addEventListener('click', () => {
+  flagMode = !flagMode;
+  flagToggle.classList.toggle('active', flagMode);
+  flagToggle.textContent = flagMode ? 'Flag: ON' : 'Flag: OFF';
+});
 </script>
 
 </body>
