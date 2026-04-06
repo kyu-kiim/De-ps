@@ -11,7 +11,7 @@
     body {
       margin: 0;
       padding: 0;
-      font-family: 'MS Sans Serif', Arial, sans-serif;
+      font-family: 'Courier New', Courier, monospace;
       overflow-x: hidden;
       overflow-y: auto;
       background: #c0c0c0;
@@ -130,6 +130,76 @@
       gap: 8px;
       justify-content: center;
       margin-bottom: 12px;
+    }
+
+    .csv-panel {
+      position: relative;
+      width: 100%;
+      min-height: 100px;
+      margin: 8px auto 12px;
+      border: 1px solid #808080;
+      background: #d0d0d0;
+      overflow: hidden;
+    }
+
+    .csv-item {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      color: #000;
+      text-align: center;
+      border: 1px solid #404040;
+      background: #e8e8e8;
+      cursor: pointer;
+      padding: 2px;
+      box-sizing: border-box;
+    }
+
+    .csv-item.csv-flag,
+    .csv-item.csv-bomb {
+      background: #f0f0f0;
+    }
+
+    .csv-item.csv-apply {
+      background: #e0e8ff;
+    }
+
+    .csv-item.csv-number {
+      background: #ffffff;
+    }
+
+    .csv-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .csv-item::after {
+      content: attr(data-label);
+      position: absolute;
+      bottom: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 9px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .csv-item:hover::after {
+      opacity: 1;
+    }
+
+    .csv-item:hover {
+      transform: scale(1.05);
     }
 
     .ms-button {
@@ -253,6 +323,7 @@
               <div class="ms-controls">
                 <button class="ms-button active" id="flag-toggle">Flag: ON</button>
               </div>
+              <div id="csv-panel" class="csv-panel"></div>
               <div id="ms-board" class="ms-board"></div>
             </div>
           </div>
@@ -274,8 +345,104 @@ function generateRandomGrid() {
   const rows = Math.floor(Math.random() * 11) + 20; // 20-30
   const cols = Math.floor(Math.random() * 11) + 20; // 20-30
   const mineRatio = 0.15; // ~15% mines
-  const mines = Math.floor(rows * cols * mineRatio);
+  const mines = Math.max(30, Math.floor(rows * cols * mineRatio));
   return { rows, cols, mines };
+}
+
+const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSy4u5g38yzruaKY4dT3KzIps8zHhBbJ_TTwKqSWLeRvkSZRrhRsii6hTZtsfcnhl79gyxdAodJ1BxW/pub?gid=260719620&single=true&output=csv';
+
+function parseCsv(text) {
+  return text.trim().split(/\r?\n/).map(line => {
+    const cells = [];
+    let current = '';
+    let insideQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        insideQuotes = !insideQuotes;
+      } else if (char === ',' && !insideQuotes) {
+        cells.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    cells.push(current.trim());
+    return cells;
+  });
+}
+
+function classifyCellValue(value) {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized.includes('flag') || normalized.includes('깃발')) return 'flag';
+  if (normalized.includes('bomb') || normalized.includes('지뢰') || normalized.includes('폭탄')) return 'bomb';
+  if (normalized.includes('apply') || normalized.includes('적용')) return 'apply';
+  if (/\d+/.test(normalized)) return 'number';
+  return null;
+}
+
+function mapCsvToItems(rows) {
+  const items = [];
+  rows.forEach((cells, rowIndex) => {
+    cells.forEach((cell, colIndex) => {
+      const type = classifyCellValue(cell);
+      if (!type) return;
+      items.push({ type, label: cell, row: rowIndex, col: colIndex });
+    });
+  });
+  if (items.length === 0) {
+    return [
+      { type: 'flag', label: 'FLAG' },
+      { type: 'bomb', label: 'BOMB' },
+      { type: 'apply', label: 'APPLY' },
+      { type: 'number', label: '7' },
+      { type: 'number', label: '2' }
+    ];
+  }
+  return items;
+}
+
+async function fetchCsvData() {
+  try {
+    const response = await fetch(csvUrl);
+    const text = await response.text();
+    return mapCsvToItems(parseCsv(text));
+  } catch (error) {
+    return mapCsvToItems([]);
+  }
+}
+
+function renderCsvItems(items) {
+  const panel = document.getElementById('csv-panel');
+  panel.innerHTML = '';
+  const width = panel.clientWidth;
+  const height = panel.clientHeight;
+  items.forEach(item => {
+    const node = document.createElement('div');
+    node.className = `csv-item csv-${item.type}`;
+    node.dataset.label = item.label || item.type.toUpperCase();
+    const left = Math.floor(Math.random() * Math.max(1, width - 48));
+    const top = Math.floor(Math.random() * Math.max(1, height - 48));
+    node.style.left = `${left}px`;
+    node.style.top = `${top}px`;
+    if (item.type === 'flag') {
+      const img = document.createElement('img');
+      img.src = './De-ps-images-flag.png';
+      img.alt = 'flag';
+      node.appendChild(img);
+    } else if (item.type === 'bomb') {
+      const img = document.createElement('img');
+      img.src = './bomb.png';
+      img.alt = 'bomb';
+      node.appendChild(img);
+    } else if (item.type === 'apply') {
+      node.textContent = 'APPLY';
+    } else if (item.type === 'number') {
+      node.textContent = item.label.match(/\d+/)?.[0] || '0';
+    }
+    panel.appendChild(node);
+  });
 }
 
 let rows = 9;
@@ -468,7 +635,7 @@ function renderBoard() {
         if (cell.mine) {
           button.classList.add('mine');
           const img = document.createElement('img');
-          img.src = './images/bomb.png';
+          img.src = './bomb.png';
           img.alt = 'bomb';
           img.style.width = '100%';
           img.style.height = '100%';
@@ -493,10 +660,10 @@ function renderBoard() {
 }
 
 boardContainer.addEventListener('click', (event) => {
-  const target = event.target;
-  if (!target.classList.contains('ms-cell')) return;
-  const r = Number(target.dataset.row);
-  const c = Number(target.dataset.col);
+  const cellButton = event.target.closest('.ms-cell');
+  if (!cellButton || !boardContainer.contains(cellButton)) return;
+  const r = Number(cellButton.dataset.row);
+  const c = Number(cellButton.dataset.col);
   if (flagMode) {
     toggleFlag(r, c);
   } else {
@@ -505,15 +672,18 @@ boardContainer.addEventListener('click', (event) => {
 });
 
 boardContainer.addEventListener('contextmenu', (event) => {
-  const target = event.target;
-  if (!target.classList.contains('ms-cell')) return;
+  const cellButton = event.target.closest('.ms-cell');
+  if (!cellButton || !boardContainer.contains(cellButton)) return;
   event.preventDefault();
-  const r = Number(target.dataset.row);
-  const c = Number(target.dataset.col);
+  const r = Number(cellButton.dataset.row);
+  const c = Number(cellButton.dataset.col);
   toggleFlag(r, c);
 });
 
-initGame(generateRandomGrid());
+fetchCsvData().then(items => {
+  renderCsvItems(items);
+  initGame(generateRandomGrid());
+});
 
 flagToggle.addEventListener('click', () => {
   flagMode = !flagMode;
