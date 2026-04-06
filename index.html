@@ -100,7 +100,11 @@
     }
 
     .minesweeper-panel {
-      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 16px;
       width: auto;
       margin: 0 auto;
       padding: 0;
@@ -108,6 +112,14 @@
       border: none;
       box-shadow: none;
       border-radius: 0;
+    }
+
+    .ms-controls {
+      flex: 1 1 100%;
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 12px;
     }
 
     .ms-header {
@@ -126,18 +138,10 @@
       display: none;
     }
 
-    .ms-controls {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      margin-bottom: 12px;
-    }
-
     .hover-info {
       display: none;
-      position: absolute;
-      top: 16px;
-      left: 16px;
+      position: static;
+      flex: 0 0 360px;
       width: 360px;
       padding: 8px 12px;
       background: transparent;
@@ -147,7 +151,6 @@
       text-align: left;
       overflow: hidden;
       min-height: 200px;
-      z-index: 20;
       pointer-events: none;
     }
 
@@ -203,7 +206,6 @@
       height: 100%;
       object-fit: contain;
       border: 1px solid rgba(0, 0, 0, 0.12);
-      border-radius: 8px;
       background: rgba(255,255,255,0.7);
     }
 
@@ -511,13 +513,15 @@ function showHoverInfo(item) {
   hoverSearch.href = item.link || 'https://www.google.com';
 
   if (item.img) {
-    if (hoverImage.src !== item.img) {
+    if (hoverImage.dataset.src !== item.img) {
       hoverImage.src = item.img;
+      hoverImage.dataset.src = item.img;
     }
     hoverImage.alt = item.name || 'hover image';
     hoverLink.classList.add('visible');
   } else {
     hoverImage.src = '';
+    hoverImage.dataset.src = '';
     hoverImage.alt = '';
     hoverLink.classList.remove('visible');
   }
