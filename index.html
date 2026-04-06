@@ -203,6 +203,7 @@
       color: #000;
       text-shadow: none;
       font-weight: bold;
+      padding: 0;
     }
 
     .ms-cell.flagged {
@@ -210,13 +211,11 @@
       background: #c0c0c0;
       border-color: #dfdfdf #404040 #404040 #dfdfdf;
       border: 1px solid;
+      padding: 0;
     }
 
     .ms-cell.flagged::after {
-      content: '🚩';
-      font-size: 10px;
-      color: #ff0000;
-      text-shadow: none;
+      display: none;
     }
 
     .ms-help {
@@ -272,20 +271,11 @@ const difficulties = {
 };
 
 function generateRandomGrid() {
-  const sizes = [
-    { rows: 8, cols: 8, mines: 8 },
-    { rows: 8, cols: 9, mines: 9 },
-    { rows: 9, cols: 8, mines: 9 },
-    { rows: 9, cols: 9, mines: 10 },
-    { rows: 9, cols: 10, mines: 11 },
-    { rows: 10, cols: 9, mines: 11 },
-    { rows: 10, cols: 10, mines: 12 },
-    { rows: 8, cols: 10, mines: 10 },
-    { rows: 10, cols: 8, mines: 10 },
-    { rows: 9, cols: 12, mines: 14 },
-    { rows: 12, cols: 9, mines: 14 },
-  ];
-  return sizes[Math.floor(Math.random() * sizes.length)];
+  const rows = Math.floor(Math.random() * 11) + 20; // 20-30
+  const cols = Math.floor(Math.random() * 11) + 20; // 20-30
+  const mineRatio = 0.15; // ~15% mines
+  const mines = Math.floor(rows * cols * mineRatio);
+  return { rows, cols, mines };
 }
 
 let rows = 9;
@@ -477,7 +467,12 @@ function renderBoard() {
         button.classList.add('revealed');
         if (cell.mine) {
           button.classList.add('mine');
-          button.textContent = '💣';
+          const img = document.createElement('img');
+          img.src = './bomb.png';
+          img.alt = 'bomb';
+          img.style.width = '100%';
+          img.style.height = '100%';
+          button.appendChild(img);
         } else if (cell.adjacent > 0) {
           button.textContent = cell.adjacent;
           const colors = ['#0000ff', '#009900', '#ff0000', '#000080', '#800000', '#008080', '#000000', '#808080'];
@@ -485,6 +480,12 @@ function renderBoard() {
         }
       } else if (cell.flagged) {
         button.classList.add('flagged');
+        const img = document.createElement('img');
+        img.src = './De-ps-images-flag.png';
+        img.alt = 'flag';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        button.appendChild(img);
       }
       boardContainer.appendChild(button);
     }
