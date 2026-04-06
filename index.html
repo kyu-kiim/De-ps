@@ -100,6 +100,7 @@
     }
 
     .minesweeper-panel {
+      position: relative;
       width: auto;
       margin: 0;
       padding: 0;
@@ -132,74 +133,49 @@
       margin-bottom: 12px;
     }
 
-    .csv-panel {
+    .hover-info {
+      display: none;
       position: relative;
       width: 100%;
-      min-height: 100px;
-      margin: 8px auto 12px;
-      border: 1px solid #808080;
-      background: #d0d0d0;
-      overflow: hidden;
-    }
-
-    .csv-item {
-      position: absolute;
-      width: 40px;
-      height: 40px;
-      display: grid;
-      place-items: center;
-      font-size: 10px;
-      color: #000;
-      text-align: center;
-      border: 1px solid #404040;
-      background: #e8e8e8;
-      cursor: pointer;
-      padding: 2px;
-      box-sizing: border-box;
-    }
-
-    .csv-item.csv-flag,
-    .csv-item.csv-bomb {
-      background: #f0f0f0;
-    }
-
-    .csv-item.csv-apply {
-      background: #e0e8ff;
-    }
-
-    .csv-item.csv-number {
-      background: #ffffff;
-    }
-
-    .csv-item img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
-    .csv-item::after {
-      content: attr(data-label);
-      position: absolute;
-      bottom: -18px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.85);
-      color: #fff;
-      padding: 2px 6px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      background: #f6f6f6;
+      border: 1px solid #a0a0a0;
       border-radius: 4px;
-      font-size: 9px;
-      white-space: nowrap;
+      color: #000;
+      font-family: 'MS Sans Serif', sans-serif;
+      box-shadow: inset 1px 1px 0 rgba(255,255,255,0.8);
+    }
+
+    .hover-info.visible {
+      display: block;
+    }
+
+    .hover-info div {
+      margin: 4px 0;
+      font-size: 12px;
+    }
+
+    .hover-link {
+      display: none;
+      position: absolute;
+      right: 10px;
+      bottom: 8px;
+      width: 90px;
+      height: 28px;
       opacity: 0;
-      pointer-events: none;
       transition: opacity 0.2s ease;
     }
 
-    .csv-item:hover::after {
+    .hover-link.visible {
+      display: block;
       opacity: 1;
     }
 
-    .csv-item:hover {
-      transform: scale(1.05);
+    .hover-link img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
 
     .ms-button {
@@ -323,8 +299,17 @@
               <div class="ms-controls">
                 <button class="ms-button active" id="flag-toggle">Flag: ON</button>
               </div>
-              <div id="csv-panel" class="csv-panel"></div>
+              <div id="hover-info" class="hover-info">
+                <div id="hover-text">Hover over a flag, bomb, or number.</div>
+                <div id="hover-type"></div>
+                <div id="hover-role"></div>
+              </div>
               <div id="ms-board" class="ms-board"></div>
+              <div id="hover-link" class="hover-link">
+                <a id="hover-search" href="https://www.google.com" target="_blank" rel="noopener noreferrer">
+                  <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_74x24dp.png" alt="Google Search">
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -350,6 +335,7 @@ function generateRandomGrid() {
 }
 
 const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSy4u5g38yzruaKY4dT3KzIps8zHhBbJ_TTwKqSWLeRvkSZRrhRsii6hTZtsfcnhl79gyxdAodJ1BxW/pub?gid=260719620&single=true&output=csv';
+const csvItemsByType = { flag: [], bomb: [], apply: [], number: [] };
 
 function parseCsv(text) {
   return text.trim().split(/\r?\n/).map(line => {
@@ -388,16 +374,17 @@ function mapCsvToItems(rows) {
     cells.forEach((cell, colIndex) => {
       const type = classifyCellValue(cell);
       if (!type) return;
-      items.push({ type, label: cell, row: rowIndex, col: colIndex });
+      const role = type === 'flag' ? 'marker' : type === 'bomb' ? 'explosive' : type === 'apply' ? 'action' : 'digit';
+      items.push({ type, label: cell, role, row: rowIndex, col: colIndex });
     });
   });
   if (items.length === 0) {
     return [
-      { type: 'flag', label: 'FLAG' },
-      { type: 'bomb', label: 'BOMB' },
-      { type: 'apply', label: 'APPLY' },
-      { type: 'number', label: '7' },
-      { type: 'number', label: '2' }
+      { type: 'flag', label: 'FLAG', role: 'marker' },
+      { type: 'bomb', label: 'BOMB', role: 'explosive' },
+      { type: 'apply', label: 'APPLY', role: 'action' },
+      { type: 'number', label: '7', role: 'digit' },
+      { type: 'number', label: '2', role: 'digit' }
     ];
   }
   return items;
@@ -413,36 +400,38 @@ async function fetchCsvData() {
   }
 }
 
-function renderCsvItems(items) {
-  const panel = document.getElementById('csv-panel');
-  panel.innerHTML = '';
-  const width = panel.clientWidth;
-  const height = panel.clientHeight;
-  items.forEach(item => {
-    const node = document.createElement('div');
-    node.className = `csv-item csv-${item.type}`;
-    node.dataset.label = item.label || item.type.toUpperCase();
-    const left = Math.floor(Math.random() * Math.max(1, width - 48));
-    const top = Math.floor(Math.random() * Math.max(1, height - 48));
-    node.style.left = `${left}px`;
-    node.style.top = `${top}px`;
-    if (item.type === 'flag') {
-      const img = document.createElement('img');
-      img.src = './De-ps-images-flag.png';
-      img.alt = 'flag';
-      node.appendChild(img);
-    } else if (item.type === 'bomb') {
-      const img = document.createElement('img');
-      img.src = './bomb.png';
-      img.alt = 'bomb';
-      node.appendChild(img);
-    } else if (item.type === 'apply') {
-      node.textContent = 'APPLY';
-    } else if (item.type === 'number') {
-      node.textContent = item.label.match(/\d+/)?.[0] || '0';
-    }
-    panel.appendChild(node);
-  });
+function storeCsvItems(items) {
+  csvItemsByType.flag = items.filter(item => item.type === 'flag');
+  csvItemsByType.bomb = items.filter(item => item.type === 'bomb');
+  csvItemsByType.apply = items.filter(item => item.type === 'apply');
+  csvItemsByType.number = items.filter(item => item.type === 'number');
+}
+
+function getHoverItem(type) {
+  const pool = csvItemsByType[type] || [];
+  if (pool.length === 0) {
+    return { type, label: type.toUpperCase(), role: type === 'number' ? 'digit' : type };
+  }
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function showHoverInfo(type, item) {
+  const hoverInfo = document.getElementById('hover-info');
+  const hoverText = document.getElementById('hover-text');
+  const hoverType = document.getElementById('hover-type');
+  const hoverRole = document.getElementById('hover-role');
+  const hoverSearch = document.getElementById('hover-search');
+  hoverText.textContent = item.label;
+  hoverType.textContent = `Type: ${item.type}`;
+  hoverRole.textContent = `Role: ${item.role}`;
+  hoverSearch.href = `https://www.google.com/search?q=${encodeURIComponent(item.label)}`;
+  hoverInfo.classList.add('visible');
+  document.getElementById('hover-link').classList.add('visible');
+}
+
+function hideHoverInfo() {
+  document.getElementById('hover-info').classList.remove('visible');
+  document.getElementById('hover-link').classList.remove('visible');
 }
 
 let rows = 9;
@@ -680,8 +669,37 @@ boardContainer.addEventListener('contextmenu', (event) => {
   toggleFlag(r, c);
 });
 
+boardContainer.addEventListener('mouseover', (event) => {
+  const cellButton = event.target.closest('.ms-cell');
+  if (!cellButton || !boardContainer.contains(cellButton)) return;
+  const r = Number(cellButton.dataset.row);
+  const c = Number(cellButton.dataset.col);
+  const cell = board[r][c];
+  let type = null;
+  if (cell.flagged) {
+    type = 'flag';
+  } else if (cell.revealed && cell.mine) {
+    type = 'bomb';
+  } else if (cell.revealed && cell.adjacent > 0) {
+    type = 'number';
+  } else if (cell.revealed && cell.adjacent === 0) {
+    type = 'apply';
+  }
+  if (type) {
+    showHoverInfo(type, getHoverItem(type));
+  } else {
+    hideHoverInfo();
+  }
+});
+
+boardContainer.addEventListener('mouseout', (event) => {
+  const cellButton = event.target.closest('.ms-cell');
+  if (!cellButton || !boardContainer.contains(cellButton)) return;
+  hideHoverInfo();
+});
+
 fetchCsvData().then(items => {
-  renderCsvItems(items);
+  storeCsvItems(items);
   initGame(generateRandomGrid());
 });
 
