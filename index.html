@@ -112,14 +112,19 @@
       border: none;
       box-shadow: none;
       border-radius: 0;
+      position: relative;
     }
 
-    .ms-controls {
-      flex: 1 1 100%;
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      margin-bottom: 12px;
+    .board-wrapper {
+      position: relative;
+      display: inline-block;
+      padding-top: 28px;
+    }
+
+    #flag-toggle {
+      position: absolute;
+      top: 0;
+      right: 0;
     }
 
     .ms-header {
@@ -143,46 +148,113 @@
       position: fixed;
       top: 16px;
       left: 16px;
-      width: 360px;
-      padding: 8px 12px;
-      background: transparent;
-      border: none;
+      width: 300px;
+      background: #c0c0c0;
+      border: 2px solid;
+      border-color: #ffffff #808080 #808080 #ffffff;
       color: #000;
       font-family: 'MS Sans Serif', sans-serif;
-      text-align: left;
-      overflow: hidden;
-      min-height: 200px;
       z-index: 1100;
-      pointer-events: none;
+      pointer-events: auto;
+      box-shadow: 1px 1px 0 #404040;
     }
 
     .hover-info.visible {
       display: block;
     }
 
+    .hover-titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #000080;
+      color: #ffffff;
+      padding: 2px 4px;
+      font-size: 11px;
+      font-weight: bold;
+      user-select: none;
+    }
+
     .hover-name {
-      font-size: 30pt;
-      line-height: 1.05;
-      margin-left: 0;
-      margin-bottom: 10px;
+      font-size: 11px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      flex: 1;
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .hover-close {
+      background: #c0c0c0;
+      border: 1px solid;
+      border-color: #ffffff #808080 #808080 #ffffff;
+      width: 16px;
+      height: 14px;
+      font-size: 9px;
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+      margin-left: 4px;
+      line-height: 1;
+      font-family: 'MS Sans Serif', sans-serif;
+    }
+
+    .hover-close:active {
+      border-color: #808080 #ffffff #ffffff #808080;
     }
 
     .hover-text {
       font-size: 8pt;
-      line-height: 1.1;
-      margin-left: 0;
-      margin-bottom: 12px;
+      line-height: 1.3;
+      padding: 6px 8px 4px;
       max-width: 100%;
       white-space: normal;
     }
 
     .hover-meta {
-      font-size: 10pt;
-      margin-left: 0;
-      margin-bottom: 4px;
+      font-size: 9pt;
+      padding: 0 8px 4px;
+    }
+
+    #hover-log {
+      display: none;
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      width: 180px;
+      max-height: 50vh;
+      overflow-y: auto;
+      background: #c0c0c0;
+      border: 2px solid;
+      border-color: #ffffff #808080 #808080 #ffffff;
+      z-index: 900;
+      box-shadow: 1px 1px 0 #404040;
+      user-select: none;
+    }
+
+    #hover-log.visible {
+      display: block;
+    }
+
+    .log-titlebar {
+      background: #000080;
+      color: #ffffff;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: bold;
+      font-family: 'MS Sans Serif', sans-serif;
+      cursor: move;
+    }
+
+    .log-item {
+      padding: 3px 8px;
+      font-size: 11px;
+      border-bottom: 1px solid #c0c0c0;
+      font-family: 'MS Sans Serif', sans-serif;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .hover-link {
@@ -338,10 +410,10 @@
           <div class="page-content">
             <div class="white-panel">
               <div class="minesweeper-panel">
-                <div class="ms-controls">
-                  <button class="ms-button active" id="flag-toggle">Flag: ON</button>
+                <div class="board-wrapper">
+                  <button class="ms-button" id="flag-toggle">Flag: OFF</button>
+                  <div id="ms-board" class="ms-board"></div>
                 </div>
-                <div id="ms-board" class="ms-board"></div>
               </div>
             </div>
           </div>
@@ -350,10 +422,17 @@
     </div>
   </div>
   <div id="hover-info" class="hover-info">
-    <div id="hover-name" class="hover-name">Hover over a cell</div>
-    <div id="hover-text" class="hover-text">현재 CSV 데이터가 로드되면 이곳에 text 항목이 표시됩니다.</div>
+    <div class="hover-titlebar">
+      <span id="hover-name" class="hover-name">-</span>
+      <button id="hover-close" class="hover-close">✕</button>
+    </div>
+    <div id="hover-text" class="hover-text"></div>
     <div id="hover-type" class="hover-meta"></div>
     <div id="hover-role" class="hover-meta"></div>
+  </div>
+  <div id="hover-log">
+    <div class="log-titlebar">Visited</div>
+    <div id="hover-log-list"></div>
   </div>
   <div id="hover-link" class="hover-link">
     <a id="hover-search" href="https://www.google.com" target="_blank" rel="noopener noreferrer">
@@ -604,12 +683,11 @@ function initGame(settings) {
   mineCount = settings.mines;
   firstMove = true;
   gameOver = false;
-  flagMode = true;
+  flagMode = false;
   flags = 0;
   board = [];
-  setMessage('Flag mode active');
-  flagToggle.classList.add('active');
-  flagToggle.textContent = 'Flag: ON';
+  flagToggle.classList.remove('active');
+  flagToggle.textContent = 'Flag: OFF';
   boardContainer.style.setProperty('--cols', cols);
   stopTimer();
   buildHoverPools();
@@ -627,6 +705,7 @@ function createBoard() {
         adjacent: 0,
         revealed: false,
         flagged: false,
+        hovered: false,
         hoverItems: {
           flag: null,
           bomb: null,
@@ -873,8 +952,10 @@ boardContainer.addEventListener('mouseover', (event) => {
   const r = Number(cellButton.dataset.row);
   const c = Number(cellButton.dataset.col);
   const cell = board[r][c];
-  let hoverType = null;
 
+  if (cell.hovered) return;
+
+  let hoverType = null;
   if (cell.flagged) {
     hoverType = 'flag';
   } else if (cell.revealed) {
@@ -888,18 +969,10 @@ boardContainer.addEventListener('mouseover', (event) => {
   }
 
   if (hoverType) {
-    showHoverInfo(getHoverItem(hoverType, cell));
-  } else {
-    hideHoverInfo();
-  }
-});
-
-boardContainer.addEventListener('mouseout', (event) => {
-  const cellButton = event.target.closest('.ms-cell');
-  if (!cellButton || !boardContainer.contains(cellButton)) return;
-  if (!event.relatedTarget || !cellButton.contains(event.relatedTarget)) {
-    currentHoverCell = null;
-    hideHoverInfo();
+    cell.hovered = true;
+    const item = getHoverItem(hoverType, cell);
+    showHoverInfo(item);
+    addToLog(item);
   }
 });
 
@@ -913,6 +986,39 @@ flagToggle.addEventListener('click', () => {
   flagToggle.classList.toggle('active', flagMode);
   flagToggle.textContent = flagMode ? 'Flag: ON' : 'Flag: OFF';
 });
+
+document.getElementById('hover-close').addEventListener('click', () => {
+  hideHoverInfo();
+});
+
+function addToLog(item) {
+  const logPanel = document.getElementById('hover-log');
+  const logList = document.getElementById('hover-log-list');
+  const entry = document.createElement('div');
+  entry.className = 'log-item';
+  entry.textContent = item.name || '(unnamed)';
+  entry.title = item.text || '';
+  logList.appendChild(entry);
+  logPanel.classList.add('visible');
+}
+
+(function () {
+  const logPanel = document.getElementById('hover-log');
+  const titlebar = logPanel.querySelector('.log-titlebar');
+  let dragging = false, ox = 0, oy = 0, startL = 0, startT = 0;
+  titlebar.addEventListener('mousedown', (e) => {
+    dragging = true;
+    ox = e.clientX; oy = e.clientY;
+    startL = logPanel.offsetLeft; startT = logPanel.offsetTop;
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    logPanel.style.left = `${startL + e.clientX - ox}px`;
+    logPanel.style.top = `${startT + e.clientY - oy}px`;
+  });
+  document.addEventListener('mouseup', () => { dragging = false; });
+}());
 
 // Zoom intro: 4x centered, auto zoom-out after 1s
 (function () {
