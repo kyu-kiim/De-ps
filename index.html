@@ -255,25 +255,48 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      cursor: pointer;
+    }
+
+    .log-item:hover {
+      background: #d4d4ec;
+    }
+
+    .log-item.active {
+      background: #000080;
+      color: #ffffff;
+    }
+
+    .mine-count {
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'MS Sans Serif', sans-serif;
+      font-size: 11px;
+      font-weight: bold;
+      white-space: nowrap;
+      pointer-events: none;
     }
 
     #img-stack {
       position: fixed;
       bottom: 20px;
       right: 20px;
-      width: 140px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+      width: 160px;
+      height: 200px;
       z-index: 800;
       pointer-events: none;
     }
 
     .stack-img-wrap {
+      position: absolute;
       width: 140px;
       height: 140px;
-      flex-shrink: 0;
+      right: 0;
+      bottom: 0;
       pointer-events: auto;
+      transition: bottom 0.25s ease, transform 0.25s ease;
     }
 
     .stack-img-wrap a {
@@ -286,8 +309,10 @@
       width: 100%;
       height: 100%;
       object-fit: contain;
-      border: 1px solid rgba(0,0,0,0.15);
-      background: rgba(255,255,255,0.75);
+      border: 1px solid rgba(0,0,0,0.2);
+      background: rgba(255,255,255,0.88);
+      display: block;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.25);
     }
 
     .log-toggle {
@@ -435,6 +460,7 @@
             <div class="white-panel">
               <div class="minesweeper-panel">
                 <div class="board-wrapper">
+                  <div id="mine-count" class="mine-count"></div>
                   <button class="ms-button" id="flag-toggle">Flag: OFF</button>
                   <div id="ms-board" class="ms-board"></div>
                 </div>
@@ -475,8 +501,8 @@ const difficulties = {
 function generateRandomGrid() {
   const rows = Math.floor(Math.random() * 11) + 20; // 20-30
   const cols = Math.floor(Math.random() * 11) + 20; // 20-30
-  const mineRatio = 0.15; // ~15% mines
-  const mines = Math.max(30, Math.floor(rows * cols * mineRatio));
+  const mineRatio = 0.09;
+  const mines = Math.max(15, Math.floor(rows * cols * mineRatio));
   return { rows, cols, mines };
 }
 
@@ -879,6 +905,8 @@ function checkWin() {
 }
 
 function renderBoard() {
+  const mineCountEl = document.getElementById('mine-count');
+  if (mineCountEl) mineCountEl.textContent = `Mines: ${countMinesRemaining()}`;
   boardContainer.innerHTML = '';
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
@@ -958,8 +986,6 @@ boardContainer.addEventListener('mouseover', (event) => {
       hoverType = 'bomb';
     } else if (cell.adjacent > 0) {
       hoverType = 'number';
-    } else {
-      hoverType = 'apply';
     }
   }
 
@@ -987,6 +1013,19 @@ document.getElementById('hover-close').addEventListener('click', () => {
   hideHoverInfo();
 });
 
+function reorderStack() {
+  const stack = document.getElementById('img-stack');
+  const items = Array.from(stack.children);
+  const n = items.length;
+  items.forEach((item, i) => {
+    const depth = n - 1 - i; // 0 = top (last child)
+    item.style.bottom = `${depth * 10}px`;
+    item.style.right = `${depth * 4}px`;
+    item.style.zIndex = i + 1;
+    item.style.transform = depth === 0 ? 'rotate(0deg)' : `rotate(${(depth % 2 === 0 ? 1 : -1) * Math.min(depth * 2, 8)}deg)`;
+  });
+}
+
 function addImageToStack(item) {
   const imageUrl = getImageUrl(item.img);
   if (!imageUrl) return null;
@@ -1002,24 +1041,32 @@ function addImageToStack(item) {
   img.alt = item.name || '';
   a.appendChild(img);
   wrapper.appendChild(a);
-  stack.insertBefore(wrapper, stack.firstChild);
+  stack.appendChild(wrapper);
+  reorderStack();
   return wrapper;
 }
+
+let activeLogEntry = null;
 
 function addToLog(item, imgWrapper) {
   const logPanel = document.getElementById('hover-log');
   const logList = document.getElementById('hover-log-list');
   const entry = document.createElement('div');
-  entry.className = 'log-item';
+  entry.className = 'log-item active';
   entry.textContent = item.name || '(unnamed)';
   entry.title = item.text || '';
-  entry.style.cursor = 'pointer';
+  if (activeLogEntry) activeLogEntry.classList.remove('active');
+  activeLogEntry = entry;
   entry.addEventListener('click', () => {
     showHoverInfo(item);
     if (imgWrapper) {
       const stack = document.getElementById('img-stack');
-      stack.insertBefore(imgWrapper, stack.firstChild);
+      stack.appendChild(imgWrapper);
+      reorderStack();
     }
+    if (activeLogEntry) activeLogEntry.classList.remove('active');
+    activeLogEntry = entry;
+    entry.classList.add('active');
   });
   logList.appendChild(entry);
   logPanel.classList.add('visible');
