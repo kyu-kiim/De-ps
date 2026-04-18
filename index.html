@@ -823,10 +823,6 @@ function revealCell(r, c) {
 
   if (cell.mine) {
     cell.revealed = true;
-    gameOver = true;
-    setMessage('Game Over');
-    stopTimer();
-    revealAllMines();
     renderBoard();
     return;
   }
