@@ -264,7 +264,7 @@
 
     .log-item.active {
       background: #000080;
-      color: #ffffff;
+      color: #ffffff !important;
     }
 
     .mine-count {
@@ -854,6 +854,9 @@ function toggleFlag(r, c) {
   const cell = board[r][c];
   if (cell.revealed && cell.mine) {
     cell.mine = false;
+    cell.revealed = false;
+    cell.flagged = true;
+    flags += 1;
     updateAdjacencies();
     renderBoard();
     if (countMinesRemaining() === 0) {
@@ -928,7 +931,7 @@ function checkWin() {
 
 function renderBoard() {
   const mineCountEl = document.getElementById('mine-count');
-  if (mineCountEl) mineCountEl.textContent = `Mines: ${countMinesRemaining()}`;
+  if (mineCountEl) mineCountEl.textContent = `Mines: ${countMinesRemaining()}  Flags: ${flags}`;
   boardContainer.innerHTML = '';
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
@@ -1016,7 +1019,7 @@ boardContainer.addEventListener('mouseover', (event) => {
     const item = getHoverItem(hoverType, cell);
     showHoverInfo(item);
     const imgWrapper = addImageToStack(item);
-    addToLog(item, imgWrapper);
+    addToLog(item, imgWrapper, hoverType);
   }
 });
 
@@ -1071,14 +1074,21 @@ function addImageToStack(item) {
 
 let activeLogEntry = null;
 
-function addToLog(item, imgWrapper) {
+const typeColors = { bomb: '#cc0000', flag: '#cc0000', number: '#0000aa', apply: '#006600' };
+
+function addToLog(item, imgWrapper, hoverType) {
   const logPanel = document.getElementById('hover-log');
   const logList = document.getElementById('hover-log-list');
   const entry = document.createElement('div');
   entry.className = 'log-item active';
   entry.textContent = item.name || '(unnamed)';
   entry.title = item.text || '';
-  if (activeLogEntry) activeLogEntry.classList.remove('active');
+  entry.dataset.baseColor = typeColors[hoverType] || '#000';
+  entry.style.color = typeColors[hoverType] || '#000';
+  if (activeLogEntry) {
+    activeLogEntry.classList.remove('active');
+    activeLogEntry.style.color = activeLogEntry.dataset.baseColor || '#000';
+  }
   activeLogEntry = entry;
   entry.addEventListener('click', () => {
     showHoverInfo(item);
@@ -1087,7 +1097,10 @@ function addToLog(item, imgWrapper) {
       stack.appendChild(imgWrapper);
       reorderStack();
     }
-    if (activeLogEntry) activeLogEntry.classList.remove('active');
+    if (activeLogEntry) {
+      activeLogEntry.classList.remove('active');
+      activeLogEntry.style.color = activeLogEntry.dataset.baseColor || '#000';
+    }
     activeLogEntry = entry;
     entry.classList.add('active');
   });
