@@ -914,45 +914,27 @@ flagToggle.addEventListener('click', () => {
   flagToggle.textContent = flagMode ? 'Flag: ON' : 'Flag: OFF';
 });
 
-// Zoom/pan system
+// Zoom intro: 4x centered, auto zoom-out after 1s
 (function () {
   const ZOOM = 4;
   const wrapper = document.getElementById('zoom-wrapper');
-  let isZoomed = true;
-  let mx = window.innerWidth / 2;
-  let my = 0;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
 
-  function applyZoom() {
-    if (!isZoomed) return;
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    wrapper.style.transformOrigin = `${vw / 2}px ${vh / 2}px`;
-    const tx = (ZOOM - 1) * (vw / 2 - mx);
-    const ty = (ZOOM - 1) * (vh / 2 - my);
-    wrapper.style.transform = `translate(${tx}px, ${ty}px) scale(${ZOOM})`;
-  }
-
+  wrapper.style.transformOrigin = `${vw / 2}px ${vh / 2}px`;
+  wrapper.style.transform = `scale(${ZOOM})`;
   document.body.classList.add('zoomed');
-  applyZoom();
 
-  document.addEventListener('mousemove', (e) => {
-    mx = e.clientX;
-    my = e.clientY;
-    applyZoom();
-  });
-
-  document.addEventListener('wheel', () => {
-    if (!isZoomed) return;
-    isZoomed = false;
-    document.body.classList.remove('zoomed');
+  setTimeout(() => {
     wrapper.style.transition = 'transform 0.9s cubic-bezier(.22,.61,.36,1)';
-    wrapper.style.transform = 'translate(0px, 0px) scale(1)';
+    wrapper.style.transform = 'scale(1)';
     wrapper.addEventListener('transitionend', () => {
       wrapper.style.transition = '';
       wrapper.style.transform = '';
       wrapper.style.transformOrigin = '';
+      document.body.classList.remove('zoomed');
     }, { once: true });
-  }, { passive: true });
+  }, 1000);
 }());
 </script>
 
