@@ -442,6 +442,23 @@
       display: none;
     }
 
+    .win-message {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #0000cc;
+      font-family: 'MS Sans Serif', sans-serif;
+      font-size: 13px;
+      z-index: 2000;
+      white-space: nowrap;
+    }
+
+    .win-message.visible {
+      display: block;
+    }
+
     body.zoomed {
       overflow: hidden;
     }
@@ -488,11 +505,29 @@
     <div id="hover-log-list" class="log-list-hidden"></div>
   </div>
   <div id="img-stack"></div>
+  <div id="win-message" class="win-message"></div>
 
 <script>
 
 const boardContainer = document.getElementById('ms-board');
 const flagToggle = document.getElementById('flag-toggle');
+
+let userLocation = null;
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(
+    pos => { userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude }; },
+    () => {}
+  );
+}
+
+function showWinScreen() {
+  const el = document.getElementById('win-message');
+  if (!el) return;
+  el.textContent = userLocation
+    ? `you are in ${userLocation.lat.toFixed(5)}, ${userLocation.lng.toFixed(5)}`
+    : 'you are in unknown location';
+  el.classList.add('visible');
+}
 
 const difficulties = {
   beginner: { rows: 9, cols: 9, mines: 10 },
@@ -802,13 +837,6 @@ function revealCell(r, c) {
     cell.revealed = true;
   }
 
-  if (checkWin()) {
-    gameOver = true;
-    setMessage('You Win!');
-    stopTimer();
-    revealAllMines(true);
-  }
-
   renderBoard();
 }
 
@@ -829,15 +857,13 @@ function toggleFlag(r, c) {
   if (gameOver) return;
   const cell = board[r][c];
   if (cell.revealed && cell.mine) {
-    cell.flagged = true;
     cell.mine = false;
     updateAdjacencies();
-    if (countMinesRemaining() === 0) {
-      revealAllCells();
-      gameOver = true;
-      setMessage('Game Over');
-    }
     renderBoard();
+    if (countMinesRemaining() === 0) {
+      gameOver = true;
+      showWinScreen();
+    }
     return;
   }
   if (cell.revealed) return;
