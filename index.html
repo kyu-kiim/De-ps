@@ -531,9 +531,9 @@ function isDirectImageUrl(url) {
 
 function getDrivePreviewUrl(url) {
   const stringUrl = String(url || '');
-  const match = stringUrl.match(/\/file\/d\/([^\/]+)\//) || stringUrl.match(/[?&]id=([^&]+)/);
+  const match = stringUrl.match(/\/file\/d\/([^\/]+)/) || stringUrl.match(/[?&]id=([^&]+)/);
   if (match) {
-    return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+    return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w300-h300`;
   }
   return null;
 }
@@ -1018,11 +1018,11 @@ function reorderStack() {
   const items = Array.from(stack.children);
   const n = items.length;
   items.forEach((item, i) => {
-    const depth = n - 1 - i; // 0 = top (last child)
+    const depth = n - 1 - i;
     item.style.bottom = `${depth * 10}px`;
-    item.style.right = `${depth * 4}px`;
+    item.style.right = `${depth * 6}px`;
     item.style.zIndex = i + 1;
-    item.style.transform = depth === 0 ? 'rotate(0deg)' : `rotate(${(depth % 2 === 0 ? 1 : -1) * Math.min(depth * 2, 8)}deg)`;
+    item.style.transform = '';
   });
 }
 
@@ -1039,6 +1039,7 @@ function addImageToStack(item) {
   const img = document.createElement('img');
   img.src = imageUrl;
   img.alt = item.name || '';
+  img.onerror = () => { wrapper.style.display = 'none'; };
   a.appendChild(img);
   wrapper.appendChild(a);
   stack.appendChild(wrapper);
