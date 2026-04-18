@@ -257,30 +257,54 @@
       text-overflow: ellipsis;
     }
 
-    .hover-link {
-      display: none;
+    #img-stack {
       position: fixed;
-      right: 20px;
       bottom: 20px;
-      width: 360px;
-      height: 360px;
-      opacity: 0;
-      transition: opacity 0.2s ease;
-      z-index: 1000;
+      right: 20px;
+      width: 140px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 800;
+      pointer-events: none;
+    }
+
+    .stack-img-wrap {
+      width: 140px;
+      height: 140px;
+      flex-shrink: 0;
       pointer-events: auto;
     }
 
-    .hover-link.visible {
+    .stack-img-wrap a {
       display: block;
-      opacity: 1;
+      width: 100%;
+      height: 100%;
     }
 
-    .hover-link img {
+    .stack-img-wrap img {
       width: 100%;
       height: 100%;
       object-fit: contain;
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(0,0,0,0.15);
+      background: rgba(255,255,255,0.75);
+    }
+
+    .log-toggle {
+      background: #c0c0c0;
+      border: 1px solid;
+      border-color: #ffffff #808080 #808080 #ffffff;
+      font-size: 8px;
+      cursor: pointer;
+      padding: 0 3px;
+      margin-right: 4px;
+      font-family: 'MS Sans Serif', sans-serif;
+      line-height: 1.4;
+      color: #ffffff;
+    }
+
+    .log-list-hidden {
+      display: none;
     }
 
     .ms-button {
@@ -431,14 +455,13 @@
     <div id="hover-role" class="hover-meta"></div>
   </div>
   <div id="hover-log">
-    <div class="log-titlebar">Visited</div>
-    <div id="hover-log-list"></div>
+    <div class="log-titlebar">
+      <button id="log-toggle" class="log-toggle">▶</button>
+      Tracked
+    </div>
+    <div id="hover-log-list" class="log-list-hidden"></div>
   </div>
-  <div id="hover-link" class="hover-link">
-    <a id="hover-search" href="https://www.google.com" target="_blank" rel="noopener noreferrer">
-      <img id="hover-image" src="" alt="hover image">
-    </a>
-  </div>
+  <div id="img-stack"></div>
 
 <script>
 
@@ -608,51 +631,21 @@ function getHoverItem(type, cell) {
   return cell.hoverItems[type] || cell.hoverItems.flag;
 }
 
+let hoverCloseTimer = null;
+
 function showHoverInfo(item) {
-  const hoverInfo = document.getElementById('hover-info');
-  const hoverName = document.getElementById('hover-name');
-  const hoverText = document.getElementById('hover-text');
-  const hoverType = document.getElementById('hover-type');
-  const hoverRole = document.getElementById('hover-role');
-  const hoverSearch = document.getElementById('hover-search');
-  const hoverImage = document.getElementById('hover-image');
-  const hoverLink = document.getElementById('hover-link');
-
-  hoverName.textContent = item.name || '';
-  hoverText.textContent = item.text || '';
-  hoverType.textContent = `Type: ${item.type || ''}`;
-  hoverRole.textContent = `Role: ${item.role || ''}`;
-  hoverSearch.href = item.link || 'https://www.google.com';
-
-  const placeholderImage = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="360" height="360"%3E%3Crect width="360" height="360" fill="%23f0f0f0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-size="18" fill="%23999"%3ELink%3C/text%3E%3C/svg%3E';
-  const imageUrl = getImageUrl(item.img);
-  if (imageUrl) {
-    if (hoverImage.dataset.src !== imageUrl) {
-      hoverImage.src = imageUrl;
-      hoverImage.dataset.src = imageUrl;
-    }
-    hoverImage.alt = item.name || 'hover image';
-    hoverLink.classList.add('visible');
-  } else if (item.img) {
-    if (hoverImage.dataset.src !== placeholderImage) {
-      hoverImage.src = placeholderImage;
-      hoverImage.dataset.src = placeholderImage;
-    }
-    hoverImage.alt = 'Link preview';
-    hoverLink.classList.add('visible');
-  } else {
-    hoverImage.src = '';
-    hoverImage.dataset.src = '';
-    hoverImage.alt = '';
-    hoverLink.classList.remove('visible');
-  }
-
-  hoverInfo.classList.add('visible');
+  document.getElementById('hover-name').textContent = item.name || '';
+  document.getElementById('hover-text').textContent = item.text || '';
+  document.getElementById('hover-type').textContent = item.type ? `Type: ${item.type}` : '';
+  document.getElementById('hover-role').textContent = item.role ? `Role: ${item.role}` : '';
+  document.getElementById('hover-info').classList.add('visible');
+  if (hoverCloseTimer) clearTimeout(hoverCloseTimer);
+  hoverCloseTimer = setTimeout(() => { hideHoverInfo(); hoverCloseTimer = null; }, 3000);
 }
 
 function hideHoverInfo() {
+  if (hoverCloseTimer) { clearTimeout(hoverCloseTimer); hoverCloseTimer = null; }
   document.getElementById('hover-info').classList.remove('visible');
-  document.getElementById('hover-link').classList.remove('visible');
 }
 
 let rows = 9;
@@ -767,8 +760,8 @@ function revealCell(r, c) {
     firstMove = false;
   }
 
-  cell.revealed = true;
   if (cell.mine) {
+    cell.revealed = true;
     gameOver = true;
     setMessage('Game Over');
     stopTimer();
@@ -779,6 +772,8 @@ function revealCell(r, c) {
 
   if (cell.adjacent === 0) {
     floodReveal(r, c);
+  } else {
+    cell.revealed = true;
   }
 
   if (checkWin()) {
@@ -972,7 +967,8 @@ boardContainer.addEventListener('mouseover', (event) => {
     cell.hovered = true;
     const item = getHoverItem(hoverType, cell);
     showHoverInfo(item);
-    addToLog(item);
+    const imgWrapper = addImageToStack(item);
+    addToLog(item, imgWrapper);
   }
 });
 
@@ -991,13 +987,40 @@ document.getElementById('hover-close').addEventListener('click', () => {
   hideHoverInfo();
 });
 
-function addToLog(item) {
+function addImageToStack(item) {
+  const imageUrl = getImageUrl(item.img);
+  if (!imageUrl) return null;
+  const stack = document.getElementById('img-stack');
+  const wrapper = document.createElement('div');
+  wrapper.className = 'stack-img-wrap';
+  const a = document.createElement('a');
+  a.href = item.link || '#';
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  const img = document.createElement('img');
+  img.src = imageUrl;
+  img.alt = item.name || '';
+  a.appendChild(img);
+  wrapper.appendChild(a);
+  stack.insertBefore(wrapper, stack.firstChild);
+  return wrapper;
+}
+
+function addToLog(item, imgWrapper) {
   const logPanel = document.getElementById('hover-log');
   const logList = document.getElementById('hover-log-list');
   const entry = document.createElement('div');
   entry.className = 'log-item';
   entry.textContent = item.name || '(unnamed)';
   entry.title = item.text || '';
+  entry.style.cursor = 'pointer';
+  entry.addEventListener('click', () => {
+    showHoverInfo(item);
+    if (imgWrapper) {
+      const stack = document.getElementById('img-stack');
+      stack.insertBefore(imgWrapper, stack.firstChild);
+    }
+  });
   logList.appendChild(entry);
   logPanel.classList.add('visible');
 }
@@ -1005,8 +1028,17 @@ function addToLog(item) {
 (function () {
   const logPanel = document.getElementById('hover-log');
   const titlebar = logPanel.querySelector('.log-titlebar');
+  const toggleBtn = document.getElementById('log-toggle');
+
+  toggleBtn.addEventListener('click', () => {
+    const list = document.getElementById('hover-log-list');
+    const hidden = list.classList.toggle('log-list-hidden');
+    toggleBtn.textContent = hidden ? '▶' : '▼';
+  });
+
   let dragging = false, ox = 0, oy = 0, startL = 0, startT = 0;
   titlebar.addEventListener('mousedown', (e) => {
+    if (e.target === toggleBtn) return;
     dragging = true;
     ox = e.clientX; oy = e.clientY;
     startL = logPanel.offsetLeft; startT = logPanel.offsetTop;
