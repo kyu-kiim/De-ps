@@ -459,6 +459,50 @@
       display: block;
     }
 
+    .world-screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000018;
+      z-index: 3000;
+      cursor: pointer;
+    }
+
+    .world-screen.visible {
+      display: block;
+    }
+
+    #world-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .world-location {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #0000cc;
+      font-family: 'MS Sans Serif', sans-serif;
+      font-size: 14px;
+      white-space: nowrap;
+      z-index: 10;
+    }
+
+    .world-hint {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #333366;
+      font-family: 'MS Sans Serif', sans-serif;
+      font-size: 10px;
+      white-space: nowrap;
+      z-index: 10;
+    }
+
     body.zoomed {
       overflow: hidden;
     }
@@ -506,6 +550,11 @@
   </div>
   <div id="img-stack"></div>
   <div id="win-message" class="win-message"></div>
+  <div id="world-screen" class="world-screen">
+    <canvas id="world-canvas"></canvas>
+    <div id="world-location" class="world-location"></div>
+    <div class="world-hint">click to close</div>
+  </div>
 
 <script>
 
@@ -520,25 +569,112 @@ if (navigator.geolocation) {
   );
 }
 
-function showWinScreen() {
-  const el = document.getElementById('win-message');
-  if (!el) return;
-  el.textContent = userLocation
-    ? `you are in ${userLocation.lat.toFixed(5)}, ${userLocation.lng.toFixed(5)}`
-    : 'you are in unknown location';
-  el.classList.add('visible');
+// Firebase Realtime Database — create a free project at firebase.google.com,
+// create a Realtime Database, set rules to { ".read":true, ".write":true }
+const FIREBASE_DB_URL = 'https://YOUR-PROJECT-default-rtdb.firebaseio.com/records.json';
+
+async function saveRecord(lat, lng) {
+  if (!FIREBASE_DB_URL.includes('YOUR-PROJECT')) {
+    try {
+      await fetch(FIREBASE_DB_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat, lng, ts: Date.now() })
+      });
+    } catch (e) {}
+  }
 }
 
-const difficulties = {
-  beginner: { rows: 9, cols: 9, mines: 10 },
-};
+async function loadRecords() {
+  if (FIREBASE_DB_URL.includes('YOUR-PROJECT')) return [];
+  try {
+    const res = await fetch(FIREBASE_DB_URL);
+    const data = await res.json();
+    if (!data) return [];
+    return Object.values(data).filter(r => r.lat != null && r.lng != null);
+  } catch (e) { return []; }
+}
 
-function generateRandomGrid() {
-  const rows = Math.floor(Math.random() * 11) + 20; // 20-30
-  const cols = Math.floor(Math.random() * 11) + 20; // 20-30
-  const mineRatio = 0.09;
-  const mines = Math.max(15, Math.floor(rows * cols * mineRatio));
-  return { rows, cols, mines };
+function drawWorldMap(records, myLat, myLng) {
+  const canvas = document.getElementById('world-canvas');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const scale = 5000; // pixels per degree
+
+  ctx.fillStyle = '#000018';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Grid lines
+  ctx.strokeStyle = '#00102a';
+  ctx.lineWidth = 1;
+  for (let x = cx % 60; x < canvas.width; x += 60) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+  }
+  for (let y = cy % 60; y < canvas.height; y += 60) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+  }
+
+  // Other players
+  records.forEach(r => {
+    const x = cx + (r.lng - myLng) * scale;
+    const y = cy - (r.lat - myLat) * scale;
+    if (x < -20 || x > canvas.width + 20 || y < -20 || y > canvas.height + 20) return;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, 12);
+    g.addColorStop(0, 'rgba(60,120,255,0.7)');
+    g.addColorStop(1, 'rgba(60,120,255,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#4488ff';
+    ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#2244aa';
+    ctx.font = '9px MS Sans Serif';
+    ctx.fillText(`${r.lat.toFixed(3)},${r.lng.toFixed(3)}`, x + 7, y - 4);
+  });
+
+  // Self — pulsing rings drawn once
+  for (let i = 3; i >= 1; i--) {
+    const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, i * 18);
+    gr.addColorStop(0, `rgba(255,255,255,${0.08 / i})`);
+    gr.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = gr;
+    ctx.beginPath(); ctx.arc(cx, cy, i * 18, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#8888ff';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(cx, cy, 20, 0, Math.PI * 2); ctx.stroke();
+}
+
+async function showWinScreen() {
+  const el = document.getElementById('win-message');
+  const locText = userLocation
+    ? `you are in ${userLocation.lat.toFixed(5)}, ${userLocation.lng.toFixed(5)}`
+    : 'you are in unknown location';
+  if (el) { el.textContent = locText; el.classList.add('visible'); }
+
+  if (!userLocation) return;
+  await saveRecord(userLocation.lat, userLocation.lng);
+  const records = await loadRecords();
+
+  setTimeout(() => {
+    const screen = document.getElementById('world-screen');
+    document.getElementById('world-location').textContent = locText;
+    screen.classList.add('visible');
+    drawWorldMap(records, userLocation.lat, userLocation.lng);
+    screen.addEventListener('click', () => screen.classList.remove('visible'), { once: true });
+  }, 1500);
+}
+
+function generateGridFromCsv(count) {
+  const blocks = Math.max(1, Math.ceil(count / 5));
+  const gridSide = Math.max(2, Math.ceil(Math.sqrt(blocks)));
+  const side = gridSide * 2;
+  const mines = Math.max(3, Math.floor(side * side * 0.09));
+  return { rows: side, cols: side, mines };
 }
 
 const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSy4u5g38yzruaKY4dT3KzIps8zHhBbJ_TTwKqSWLeRvkSZRrhRsii6hTZtsfcnhl79gyxdAodJ1BxW/pub?gid=2084734993&single=true&output=csv';
@@ -1025,7 +1161,7 @@ boardContainer.addEventListener('mouseover', (event) => {
 
 fetchCsvData().then(items => {
   csvItems = items;
-  initGame(generateRandomGrid());
+  initGame(generateGridFromCsv(csvItems.length));
 });
 
 flagToggle.addEventListener('click', () => {
@@ -1045,7 +1181,7 @@ function reorderStack() {
   items.forEach((item, i) => {
     const depth = n - 1 - i;
     item.style.bottom = `${depth * 10}px`;
-    item.style.right = `${depth * 6}px`;
+    item.style.right = '0';
     item.style.zIndex = i + 1;
     item.style.transform = '';
   });
@@ -1073,10 +1209,14 @@ function addImageToStack(item) {
 }
 
 let activeLogEntry = null;
+const trackedKeys = new Set();
 
 const typeColors = { bomb: '#cc0000', flag: '#cc0000', number: '#0000aa', apply: '#006600' };
 
 function addToLog(item, imgWrapper, hoverType) {
+  const key = (item.name || '') + '|' + (item.text || '');
+  if (trackedKeys.has(key)) return;
+  trackedKeys.add(key);
   const logPanel = document.getElementById('hover-log');
   const logList = document.getElementById('hover-log-list');
   const entry = document.createElement('div');
