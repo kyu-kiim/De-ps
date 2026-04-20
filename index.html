@@ -463,44 +463,163 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: #000018;
+      background: #c0c0c0;
       z-index: 3000;
-      cursor: pointer;
+      overflow-y: auto;
+      font-family: 'MS Sans Serif', 'Arial', sans-serif;
+      font-size: 12px;
     }
 
     .world-screen.visible {
-      display: block;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 16px 40px 16px;
+      gap: 16px;
     }
 
-    #world-canvas {
-      position: absolute;
-      inset: 0;
+    .world-titlebar {
       width: 100%;
-      height: 100%;
-    }
-
-    .world-location {
-      position: absolute;
-      bottom: 40px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: #0000cc;
+      max-width: 800px;
+      background: #000080;
+      color: #fff;
       font-family: 'MS Sans Serif', sans-serif;
-      font-size: 14px;
-      white-space: nowrap;
-      z-index: 10;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 3px 8px;
+      box-sizing: border-box;
+      border-top: 2px solid #fff;
+      border-left: 2px solid #fff;
+      border-right: 2px solid #000;
+      border-bottom: 2px solid #000;
     }
 
-    .world-hint {
-      position: absolute;
-      bottom: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: #333366;
+    .world-my-section {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .world-my-label {
+      font-family: 'MS Sans Serif', sans-serif;
+      font-size: 11px;
+      color: #000080;
+      font-weight: bold;
+    }
+
+    .world-others-label {
+      font-family: 'MS Sans Serif', sans-serif;
+      font-size: 11px;
+      color: #444;
+      font-weight: bold;
+      width: 100%;
+      max-width: 800px;
+      border-bottom: 1px solid #888;
+      padding-bottom: 4px;
+      margin-top: 8px;
+    }
+
+    .world-others-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .record-card {
+      background: #c0c0c0;
+      border-top: 2px solid #fff;
+      border-left: 2px solid #fff;
+      border-right: 2px solid #000;
+      border-bottom: 2px solid #000;
+      padding: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .record-card.is-me {
+      border: 3px solid #000080;
+      box-shadow: 0 0 0 2px #fff, 0 0 0 4px #000080;
+    }
+
+    .record-titlebar {
+      width: 100%;
+      background: #000080;
+      color: #fff;
       font-family: 'MS Sans Serif', sans-serif;
       font-size: 10px;
+      padding: 2px 4px;
+      box-sizing: border-box;
       white-space: nowrap;
-      z-index: 10;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .record-card.is-me .record-titlebar {
+      background: #000080;
+      font-weight: bold;
+    }
+
+    .record-mini-board {
+      display: grid;
+      border-top: 2px solid #888;
+      border-left: 2px solid #888;
+      border-right: 2px solid #fff;
+      border-bottom: 2px solid #fff;
+    }
+
+    .record-mini-cell {
+      width: 8px;
+      height: 8px;
+      box-sizing: border-box;
+      background: #c0c0c0;
+      border: 1px solid #888;
+      font-size: 5px;
+      line-height: 8px;
+      text-align: center;
+      color: #000;
+      overflow: hidden;
+    }
+
+    .record-card.is-me .record-mini-cell {
+      width: 14px;
+      height: 14px;
+      font-size: 8px;
+      line-height: 14px;
+    }
+
+    .record-mini-cell.revealed {
+      background: #c0c0c0;
+      border: 1px solid #999;
+    }
+
+    .record-mini-cell.revealed.mine {
+      background: #ff0000;
+    }
+
+    .record-mini-cell.flagged {
+      background: #c0c0c0;
+    }
+
+    .record-mini-cell.unrevealed {
+      background: #c0c0c0;
+      border-top: 2px solid #fff;
+      border-left: 2px solid #fff;
+      border-right: 2px solid #888;
+      border-bottom: 2px solid #888;
+    }
+
+    .record-ts {
+      font-family: 'MS Sans Serif', sans-serif;
+      font-size: 9px;
+      color: #444;
     }
 
     body.zoomed {
@@ -550,11 +669,7 @@
   </div>
   <div id="img-stack"></div>
   <div id="win-message" class="win-message"></div>
-  <div id="world-screen" class="world-screen">
-    <canvas id="world-canvas"></canvas>
-    <div id="world-location" class="world-location"></div>
-    <div class="world-hint">click to close</div>
-  </div>
+  <div id="world-screen" class="world-screen"></div>
 
 <script>
 
@@ -571,15 +686,24 @@ if (navigator.geolocation) {
 
 // Firebase Realtime Database — create a free project at firebase.google.com,
 // create a Realtime Database, set rules to { ".read":true, ".write":true }
-const FIREBASE_DB_URL = 'https://YOUR-PROJECT-default-rtdb.firebaseio.com/records.json';
+const FIREBASE_DB_URL = 'https://de-ps-3a0a9-default-rtdb.firebaseio.com/';
 
-async function saveRecord(lat, lng) {
+function serializeBoard() {
+  return board.map(row => row.map(cell => {
+    if (cell.flagged) return 'F';
+    if (!cell.revealed) return '.';
+    if (cell.mine) return 'X';
+    return cell.adjacent === 0 ? '_' : String(cell.adjacent);
+  }).join('')).join('|');
+}
+
+async function saveRecord(lat, lng, boardStr, boardRows, boardCols) {
   if (!FIREBASE_DB_URL.includes('YOUR-PROJECT')) {
     try {
-      await fetch(FIREBASE_DB_URL, {
+      await fetch(FIREBASE_DB_URL + 'records.json', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lat, lng, ts: Date.now() })
+        body: JSON.stringify({ lat, lng, ts: Date.now(), board: boardStr, rows: boardRows, cols: boardCols })
       });
     } catch (e) {}
   }
@@ -588,65 +712,89 @@ async function saveRecord(lat, lng) {
 async function loadRecords() {
   if (FIREBASE_DB_URL.includes('YOUR-PROJECT')) return [];
   try {
-    const res = await fetch(FIREBASE_DB_URL);
+    const res = await fetch(FIREBASE_DB_URL + 'records.json');
     const data = await res.json();
     if (!data) return [];
-    return Object.values(data).filter(r => r.lat != null && r.lng != null);
+    return Object.values(data).filter(r => r.ts != null).sort((a, b) => a.ts - b.ts);
   } catch (e) { return []; }
 }
 
-function drawWorldMap(records, myLat, myLng) {
-  const canvas = document.getElementById('world-canvas');
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  const ctx = canvas.getContext('2d');
-  const cx = canvas.width / 2;
-  const cy = canvas.height / 2;
-  const scale = 5000; // pixels per degree
-
-  ctx.fillStyle = '#000018';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Grid lines
-  ctx.strokeStyle = '#00102a';
-  ctx.lineWidth = 1;
-  for (let x = cx % 60; x < canvas.width; x += 60) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+function renderMiniBoard(boardStr, boardRows, boardCols, isMe) {
+  const container = document.createElement('div');
+  container.className = 'record-mini-board';
+  container.style.gridTemplateColumns = `repeat(${boardCols}, ${isMe ? 14 : 8}px)`;
+  const rowStrings = boardStr ? boardStr.split('|') : [];
+  for (let r = 0; r < boardRows; r++) {
+    const rowStr = rowStrings[r] || '';
+    for (let c = 0; c < boardCols; c++) {
+      const cell = document.createElement('div');
+      const ch = rowStr[c] || '.';
+      cell.className = 'record-mini-cell';
+      if (ch === '.') { cell.classList.add('unrevealed'); }
+      else if (ch === 'F') { cell.classList.add('flagged'); cell.textContent = '🚩'; }
+      else if (ch === 'X') { cell.classList.add('revealed', 'mine'); cell.textContent = '💣'; }
+      else if (ch === '_') { cell.classList.add('revealed'); }
+      else { cell.classList.add('revealed'); cell.textContent = ch; }
+      container.appendChild(cell);
+    }
   }
-  for (let y = cy % 60; y < canvas.height; y += 60) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-  }
+  return container;
+}
 
-  // Other players
-  records.forEach(r => {
-    const x = cx + (r.lng - myLng) * scale;
-    const y = cy - (r.lat - myLat) * scale;
-    if (x < -20 || x > canvas.width + 20 || y < -20 || y > canvas.height + 20) return;
-    const g = ctx.createRadialGradient(x, y, 0, x, y, 12);
-    g.addColorStop(0, 'rgba(60,120,255,0.7)');
-    g.addColorStop(1, 'rgba(60,120,255,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#4488ff';
-    ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#2244aa';
-    ctx.font = '9px MS Sans Serif';
-    ctx.fillText(`${r.lat.toFixed(3)},${r.lng.toFixed(3)}`, x + 7, y - 4);
-  });
+function makeRecordCard(record, isMe) {
+  const card = document.createElement('div');
+  card.className = 'record-card' + (isMe ? ' is-me' : '');
 
-  // Self — pulsing rings drawn once
-  for (let i = 3; i >= 1; i--) {
-    const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, i * 18);
-    gr.addColorStop(0, `rgba(255,255,255,${0.08 / i})`);
-    gr.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = gr;
-    ctx.beginPath(); ctx.arc(cx, cy, i * 18, 0, Math.PI * 2); ctx.fill();
+  const titlebar = document.createElement('div');
+  titlebar.className = 'record-titlebar';
+  const label = isMe ? '★ You' : (record.lat != null ? `${record.lat.toFixed(2)},${record.lng.toFixed(2)}` : 'Player');
+  titlebar.textContent = label;
+  card.appendChild(titlebar);
+
+  const bRows = record.rows || 4;
+  const bCols = record.cols || 4;
+  const miniBoard = renderMiniBoard(record.board || '', bRows, bCols, isMe);
+  card.appendChild(miniBoard);
+
+  if (record.ts) {
+    const ts = document.createElement('div');
+    ts.className = 'record-ts';
+    ts.textContent = new Date(record.ts).toLocaleString();
+    card.appendChild(ts);
   }
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#8888ff';
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.arc(cx, cy, 20, 0, Math.PI * 2); ctx.stroke();
+  return card;
+}
+
+function showWorldScreen(records, myRecord) {
+  const screen = document.getElementById('world-screen');
+  screen.innerHTML = '';
+  screen.classList.add('visible');
+
+  const titlebar = document.createElement('div');
+  titlebar.className = 'world-titlebar';
+  titlebar.textContent = 'DE-PS — Game Complete';
+  screen.appendChild(titlebar);
+
+  const mySection = document.createElement('div');
+  mySection.className = 'world-my-section';
+
+  const myLabel = document.createElement('div');
+  myLabel.className = 'world-my-label';
+  myLabel.textContent = '— Your Board —';
+  mySection.appendChild(myLabel);
+
+  mySection.appendChild(makeRecordCard(myRecord, true));
+  screen.appendChild(mySection);
+
+  const othersLabel = document.createElement('div');
+  othersLabel.className = 'world-others-label';
+  othersLabel.textContent = 'Other Players';
+  screen.appendChild(othersLabel);
+
+  const grid = document.createElement('div');
+  grid.className = 'world-others-grid';
+  records.forEach(r => grid.appendChild(makeRecordCard(r, false)));
+  screen.appendChild(grid);
 }
 
 async function showWinScreen() {
@@ -656,23 +804,33 @@ async function showWinScreen() {
     : 'you are in unknown location';
   if (el) { el.textContent = locText; el.classList.add('visible'); }
 
-  if (!userLocation) return;
-  await saveRecord(userLocation.lat, userLocation.lng);
-  const records = await loadRecords();
+  const boardStr = serializeBoard();
+  const myRecord = {
+    lat: userLocation ? userLocation.lat : null,
+    lng: userLocation ? userLocation.lng : null,
+    ts: Date.now(),
+    board: boardStr,
+    rows,
+    cols
+  };
+
+  if (userLocation) {
+    await saveRecord(userLocation.lat, userLocation.lng, boardStr, rows, cols);
+  }
+
+  const allRecords = await loadRecords();
+  const myTs = myRecord.ts;
+  const otherRecords = allRecords.filter(r => Math.abs(r.ts - myTs) > 2000);
 
   setTimeout(() => {
-    const screen = document.getElementById('world-screen');
-    document.getElementById('world-location').textContent = locText;
-    screen.classList.add('visible');
-    drawWorldMap(records, userLocation.lat, userLocation.lng);
-    screen.addEventListener('click', () => screen.classList.remove('visible'), { once: true });
+    showWorldScreen(otherRecords, myRecord);
   }, 1500);
 }
 
 function generateGridFromCsv(count) {
-  const blocks = Math.max(1, Math.ceil(count / 5));
-  const gridSide = Math.max(2, Math.ceil(Math.sqrt(blocks)));
-  const side = gridSide * 2;
+  const blocks = Math.max(1, Math.ceil(count / 2));
+  const gridSide = Math.max(1, Math.ceil(Math.sqrt(blocks)));
+  const side = gridSide * 4;
   const mines = Math.max(3, Math.floor(side * side * 0.09));
   return { rows: side, cols: side, mines };
 }
