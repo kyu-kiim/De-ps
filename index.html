@@ -472,128 +472,90 @@
       display: block;
     }
 
-    .world-hint-bar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: #000080;
-      color: #fff;
-      font-family: 'MS Sans Serif', sans-serif;
-      font-size: 11px;
-      padding: 3px 10px;
-      z-index: 3100;
-      pointer-events: none;
-    }
-
     .combined-board-wrap {
-      padding: 36px 40px 60px 40px;
-      min-width: max-content;
+      padding: 0;
+      display: inline-block;
     }
 
     .combined-board {
       display: grid;
-      position: relative;
     }
 
-    .world-cell {
-      width: 14px;
-      height: 14px;
-      box-sizing: border-box;
-      font-size: 8px;
-      text-align: center;
-      line-height: 14px;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-
-    .world-cell.wc-hidden {
+    .wc-cell {
+      width: 20px;
+      height: 20px;
+      border-radius: 0;
+      border: 1px solid;
+      border-color: #dfdfdf #404040 #404040 #dfdfdf;
       background: #c0c0c0;
-      border-top: 2px solid #fff;
-      border-left: 2px solid #fff;
-      border-right: 2px solid #888;
-      border-bottom: 2px solid #888;
-    }
-
-    .world-cell.wc-open {
-      background: #c0c0c0;
-      border: 1px solid #999;
-    }
-
-    .world-cell.wc-number {
-      background: #c0c0c0;
-      border: 1px solid #999;
+      color: #0000ff;
+      font-size: 12px;
       font-weight: bold;
-      color: #00008b;
+      display: grid;
+      place-items: center;
+      user-select: none;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'MS Sans Serif', sans-serif;
+      overflow: hidden;
     }
 
-    .world-cell.wc-flagged {
+    .wc-cell.wc-revealed {
       background: #c0c0c0;
-      border-top: 2px solid #fff;
-      border-left: 2px solid #fff;
-      border-right: 2px solid #888;
-      border-bottom: 2px solid #888;
-      font-size: 9px;
+      border-color: #808080;
+      border: 1px solid #808080;
+      box-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #404040;
     }
 
-    .world-cell.wc-mine {
-      background: #ff4444;
-      border: 1px solid #888;
-      font-size: 9px;
+    .wc-cell.wc-flagged {
+      border-color: #dfdfdf #404040 #404040 #dfdfdf;
     }
 
-    .world-cell.wc-empty {
-      background: #a8a8a8;
+    .wc-cell.wc-empty {
+      background: #b0b0b0;
+      border-color: #b0b0b0;
     }
 
-    .world-cell.wc-me.wc-hidden {
-      background: #d0deff;
-      border-top: 2px solid #eef;
-      border-left: 2px solid #eef;
-      border-right: 2px solid #88a;
-      border-bottom: 2px solid #88a;
+    .wc-cell.wc-me {
+      background: #d8e4ff;
+      border-color: #c0ccff #2040a0 #2040a0 #c0ccff;
     }
 
-    .world-cell.wc-me.wc-open,
-    .world-cell.wc-me.wc-number {
+    .wc-cell.wc-me.wc-revealed {
       background: #dce8ff;
+      border: 1px solid #8090cc;
+      box-shadow: inset 1px 1px 0 #eef2ff, inset -1px -1px 0 #2040a0;
     }
 
-    .world-cell.wc-me.wc-flagged {
-      background: #d0deff;
+    .wc-cell.wc-me.wc-flagged {
+      background: #d8e4ff;
+      border-color: #c0ccff #2040a0 #2040a0 #c0ccff;
     }
 
-    .world-cell:not(.wc-me):not(.wc-empty) {
+    .wc-cell:not(.wc-me):not(.wc-empty) {
       cursor: pointer;
     }
 
-    .world-cell:not(.wc-me):not(.wc-empty):hover {
-      filter: brightness(1.15);
+    .wc-cell:not(.wc-me):not(.wc-empty):hover {
       outline: 1px solid #000080;
-      z-index: 1;
       position: relative;
+      z-index: 1;
     }
 
-    .world-player-label {
-      position: absolute;
-      background: rgba(0,0,128,0.85);
-      color: #fff;
-      font-family: 'MS Sans Serif', sans-serif;
-      font-size: 9px;
-      padding: 1px 4px;
-      pointer-events: none;
-      white-space: nowrap;
-      z-index: 10;
+    .wc-cell img {
+      width: 100%;
+      height: 100%;
+      display: block;
     }
 
     .player-detail-overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.4);
       z-index: 4000;
       align-items: center;
       justify-content: center;
+      pointer-events: none;
     }
 
     .player-detail-overlay.visible {
@@ -601,14 +563,12 @@
     }
 
     .player-detail-window {
+      pointer-events: auto;
       background: #c0c0c0;
-      border-top: 2px solid #fff;
-      border-left: 2px solid #fff;
-      border-right: 2px solid #000;
-      border-bottom: 2px solid #000;
-      min-width: 280px;
-      max-width: 600px;
-      width: 90vw;
+      border: 2px solid;
+      border-color: #ffffff #808080 #808080 #ffffff;
+      box-shadow: 1px 1px 0 #404040;
+      max-width: 90vw;
       max-height: 85vh;
       display: flex;
       flex-direction: column;
@@ -616,33 +576,36 @@
     }
 
     .player-detail-titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       background: #000080;
       color: #fff;
-      font-size: 12px;
+      padding: 2px 4px;
+      font-size: 11px;
       font-weight: bold;
-      padding: 3px 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      user-select: none;
       flex-shrink: 0;
     }
 
     .player-detail-close {
       background: #c0c0c0;
-      border-top: 1px solid #fff;
-      border-left: 1px solid #fff;
-      border-right: 1px solid #000;
-      border-bottom: 1px solid #000;
+      border: 1px solid;
+      border-color: #ffffff #808080 #808080 #ffffff;
       color: #000;
-      font-size: 10px;
+      font-size: 9px;
       width: 16px;
       height: 14px;
       cursor: pointer;
       font-family: 'MS Sans Serif', sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       padding: 0;
+      margin-left: 4px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .player-detail-close:active {
+      border-color: #808080 #ffffff #ffffff #808080;
     }
 
     .player-detail-body {
@@ -650,26 +613,19 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-    }
-
-    .player-detail-empty {
-      font-size: 11px;
-      color: #666;
-      padding: 8px 0;
-      text-align: center;
+      gap: 6px;
     }
 
     .cleared-item {
-      background: #fff;
-      border-top: 1px solid #888;
-      border-left: 1px solid #888;
-      border-right: 1px solid #fff;
-      border-bottom: 1px solid #fff;
-      padding: 6px;
       display: flex;
       gap: 8px;
       align-items: flex-start;
+      padding: 4px 0;
+      border-bottom: 1px solid #aaa;
+    }
+
+    .cleared-item:last-child {
+      border-bottom: none;
     }
 
     .cleared-item-img {
@@ -677,8 +633,7 @@
       height: 48px;
       object-fit: cover;
       flex-shrink: 0;
-      border: 1px solid #888;
-      background: #c0c0c0;
+      border: 1px solid #808080;
     }
 
     .cleared-item-info {
@@ -695,9 +650,10 @@
     }
 
     .cleared-item-text {
-      font-size: 10px;
+      font-size: 8pt;
       color: #000;
       word-break: break-word;
+      line-height: 1.3;
     }
 
     .cleared-item-role {
@@ -832,46 +788,55 @@ async function loadRecords() {
   } catch (e) { return []; }
 }
 
-function cellCharClass(ch) {
-  if (ch === 'F') return 'wc-flagged';
-  if (ch === 'X') return 'wc-mine';
-  if (ch === '_') return 'wc-open';
-  if (ch >= '1' && ch <= '8') return 'wc-number';
-  return 'wc-hidden';
-}
+const NUM_COLORS = ['#0000ff','#009900','#ff0000','#000080','#800000','#008080','#000000','#808080'];
 
-function cellCharText(ch) {
-  if (ch === 'F') return '🚩';
-  if (ch === 'X') return '💣';
-  if (ch >= '1' && ch <= '8') return ch;
-  return '';
+function buildWorldCell(ch, isMe, clickHandler) {
+  const cell = document.createElement('div');
+  cell.className = 'wc-cell';
+  if (isMe) cell.classList.add('wc-me');
+
+  if (ch === ' ' || ch === undefined) {
+    cell.classList.add('wc-empty');
+  } else if (ch === 'F') {
+    cell.classList.add('wc-flagged');
+    const img = document.createElement('img');
+    img.src = './images/flag.png';
+    img.alt = '';
+    cell.appendChild(img);
+  } else if (ch === 'X') {
+    cell.classList.add('wc-revealed');
+    const img = document.createElement('img');
+    img.src = './images/bomb.png';
+    img.alt = '';
+    cell.appendChild(img);
+  } else if (ch === '_') {
+    cell.classList.add('wc-revealed');
+  } else if (ch >= '1' && ch <= '8') {
+    cell.classList.add('wc-revealed');
+    cell.textContent = ch;
+    cell.style.color = NUM_COLORS[+ch - 1] || '#000';
+  }
+  // '.' = unrevealed, default style
+
+  if (clickHandler && !isMe && ch !== ' ') {
+    cell.addEventListener('click', clickHandler);
+  }
+  return cell;
 }
 
 function renderDetailBoard(record) {
   const bRows = record.rows || 4;
   const bCols = record.cols || 4;
   const rowStrs = (record.board || '').split('|');
-  const CELL = 16;
 
   const boardEl = document.createElement('div');
   boardEl.style.display = 'grid';
-  boardEl.style.gridTemplateColumns = `repeat(${bCols}, ${CELL}px)`;
-  boardEl.style.gridTemplateRows = `repeat(${bRows}, ${CELL}px)`;
-  boardEl.style.border = '2px inset #888';
-  boardEl.style.alignSelf = 'center';
+  boardEl.style.gridTemplateColumns = `repeat(${bCols}, 20px)`;
 
   for (let r = 0; r < bRows; r++) {
     const rowStr = rowStrs[r] || '';
     for (let c = 0; c < bCols; c++) {
-      const ch = rowStr[c] || '.';
-      const cell = document.createElement('div');
-      cell.className = 'world-cell ' + cellCharClass(ch);
-      cell.style.width = CELL + 'px';
-      cell.style.height = CELL + 'px';
-      cell.style.lineHeight = CELL + 'px';
-      cell.style.fontSize = '9px';
-      cell.textContent = cellCharText(ch);
-      boardEl.appendChild(cell);
+      boardEl.appendChild(buildWorldCell(rowStr[c] || '.', false, null));
     }
   }
   return boardEl;
@@ -882,75 +847,52 @@ function showPlayerDetail(record) {
   const body = document.getElementById('player-detail-body');
   const title = document.getElementById('player-detail-title');
 
-  const label = record.lat != null ? `${record.lat.toFixed(3)}, ${record.lng.toFixed(3)}` : 'Player';
-  const ts = record.ts ? `  —  ${new Date(record.ts).toLocaleString()}` : '';
-  title.textContent = label + ts;
+  title.textContent = record.lat != null ? `${record.lat.toFixed(3)}, ${record.lng.toFixed(3)}` : 'Player';
   body.innerHTML = '';
 
-  // Final board
   if (record.board) {
-    const boardSection = document.createElement('div');
-    boardSection.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px;padding-bottom:8px;border-bottom:1px solid #aaa;';
-    const boardLabel = document.createElement('div');
-    boardLabel.style.cssText = 'font-size:10px;color:#444;font-family:MS Sans Serif,sans-serif;';
-    boardLabel.textContent = '최종 보드';
-    boardSection.appendChild(boardLabel);
-    boardSection.appendChild(renderDetailBoard(record));
-    body.appendChild(boardSection);
+    body.appendChild(renderDetailBoard(record));
   }
 
-  // Cleared items
   const items = record.clearedItems || [];
-  if (items.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'player-detail-empty';
-    empty.textContent = '제거한 지뢰 기록이 없습니다.';
-    body.appendChild(empty);
-  } else {
-    const itemsLabel = document.createElement('div');
-    itemsLabel.style.cssText = 'font-size:10px;color:#444;font-family:MS Sans Serif,sans-serif;padding-top:4px;';
-    itemsLabel.textContent = `제거한 지뢰 (${items.length})`;
-    body.appendChild(itemsLabel);
+  items.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'cleared-item';
 
-    items.forEach(item => {
-      const row = document.createElement('div');
-      row.className = 'cleared-item';
+    const imgUrl = getImageUrl(item.img);
+    if (imgUrl) {
+      const img = document.createElement('img');
+      img.className = 'cleared-item-img';
+      img.src = imgUrl;
+      img.alt = '';
+      row.appendChild(img);
+    }
 
-      const imgUrl = getImageUrl(item.img);
-      if (imgUrl) {
-        const img = document.createElement('img');
-        img.className = 'cleared-item-img';
-        img.src = imgUrl;
-        img.alt = item.name || '';
-        row.appendChild(img);
-      }
+    const info = document.createElement('div');
+    info.className = 'cleared-item-info';
 
-      const info = document.createElement('div');
-      info.className = 'cleared-item-info';
-
+    if (item.name) {
       const name = document.createElement('div');
       name.className = 'cleared-item-name';
-      name.textContent = item.name || '';
+      name.textContent = item.name;
       info.appendChild(name);
+    }
+    if (item.text) {
+      const text = document.createElement('div');
+      text.className = 'cleared-item-text';
+      text.textContent = item.text;
+      info.appendChild(text);
+    }
+    if (item.role || item.type) {
+      const role = document.createElement('div');
+      role.className = 'cleared-item-role';
+      role.textContent = [item.role, item.type].filter(Boolean).join(' / ');
+      info.appendChild(role);
+    }
 
-      if (item.text) {
-        const text = document.createElement('div');
-        text.className = 'cleared-item-text';
-        text.textContent = item.text;
-        info.appendChild(text);
-      }
-
-      if (item.role || item.type) {
-        const role = document.createElement('div');
-        role.className = 'cleared-item-role';
-        role.textContent = [item.role, item.type].filter(Boolean).join(' / ');
-        info.appendChild(role);
-      }
-
-      row.appendChild(info);
-      body.appendChild(row);
-    });
-  }
+    row.appendChild(info);
+    body.appendChild(row);
+  });
 
   overlay.classList.add('visible');
 }
@@ -960,13 +902,6 @@ function showWorldScreen(records, myRecord) {
   screen.innerHTML = '';
   screen.classList.add('visible');
 
-  // Hint bar
-  const hintBar = document.createElement('div');
-  hintBar.className = 'world-hint-bar';
-  hintBar.textContent = 'DE-PS — 다른 플레이어의 판을 클릭해서 기록을 확인하세요';
-  screen.appendChild(hintBar);
-
-  const CELL = 14;
   const BR = myRecord.rows || rows;
   const BC = myRecord.cols || cols;
 
@@ -986,6 +921,7 @@ function showWorldScreen(records, myRecord) {
     }
   }
 
+  const CELL = 20;
   const totalCols = metaCols * BC;
   const totalRows = metaRows * BR;
 
@@ -995,12 +931,6 @@ function showWorldScreen(records, myRecord) {
   const board = document.createElement('div');
   board.className = 'combined-board';
   board.style.gridTemplateColumns = `repeat(${totalCols}, ${CELL}px)`;
-  board.style.gridTemplateRows = `repeat(${totalRows}, ${CELL}px)`;
-  board.style.width = `${totalCols * CELL}px`;
-  board.style.height = `${totalRows * CELL}px`;
-
-  // Track last hovered player to avoid re-opening popup on every cell
-  let lastHoveredPlayer = null;
 
   for (let gr = 0; gr < totalRows; gr++) {
     for (let gc = 0; gc < totalCols; gc++) {
@@ -1009,46 +939,29 @@ function showWorldScreen(records, myRecord) {
       const pidx = mrow * metaCols + mcol;
       const slot = slots[pidx];
 
-      const cellEl = document.createElement('div');
-      cellEl.className = 'world-cell';
-
       if (!slot) {
-        cellEl.classList.add('wc-empty');
-      } else {
-        const { record, isMe } = slot;
-        const pRows = record.rows || BR;
-        const pCols = record.cols || BC;
-        const lr = gr % BR;
-        const lc = gc % BC;
-        const rowStrs = (record.board || '').split('|');
-        const ch = (lr < pRows && lc < pCols) ? ((rowStrs[lr] || '')[lc] || '.') : ' ';
-
-        if (ch === ' ') {
-          cellEl.classList.add('wc-empty');
-        } else {
-          cellEl.classList.add(cellCharClass(ch));
-          cellEl.textContent = cellCharText(ch);
-          if (isMe) cellEl.classList.add('wc-me');
-        }
-
-        if (!isMe && ch !== ' ') {
-          cellEl.addEventListener('mouseenter', () => {
-            if (lastHoveredPlayer !== pidx) {
-              lastHoveredPlayer = pidx;
-            }
-          });
-          cellEl.addEventListener('click', () => showPlayerDetail(record));
-        }
+        const empty = document.createElement('div');
+        empty.className = 'wc-cell wc-empty';
+        board.appendChild(empty);
+        continue;
       }
 
-      board.appendChild(cellEl);
+      const { record, isMe } = slot;
+      const pRows = record.rows || BR;
+      const pCols = record.cols || BC;
+      const lr = gr % BR;
+      const lc = gc % BC;
+      const rowStrs = (record.board || '').split('|');
+      const ch = (lr < pRows && lc < pCols) ? ((rowStrs[lr] || '')[lc] || '.') : ' ';
+
+      board.appendChild(buildWorldCell(ch, isMe, isMe ? null : () => showPlayerDetail(record)));
     }
   }
 
   wrap.appendChild(board);
   screen.appendChild(wrap);
 
-  // Scroll to center my board
+  // Scroll to my board
   const myMetaRow = Math.floor(myIdx / metaCols);
   const myMetaCol = myIdx % metaCols;
   const scrollX = myMetaCol * BC * CELL + (BC * CELL / 2) - window.innerWidth / 2;
