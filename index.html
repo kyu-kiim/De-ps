@@ -555,7 +555,7 @@
       z-index: 4000;
       align-items: center;
       justify-content: center;
-      pointer-events: none;
+      background: rgba(0,0,0,0.25);
     }
 
     .player-detail-overlay.visible {
@@ -563,13 +563,12 @@
     }
 
     .player-detail-window {
-      pointer-events: auto;
       background: #c0c0c0;
       border: 2px solid;
       border-color: #ffffff #808080 #808080 #ffffff;
       box-shadow: 1px 1px 0 #404040;
-      max-width: 90vw;
-      max-height: 85vh;
+      width: min(90vw, 820px);
+      height: min(85vh, 640px);
       display: flex;
       flex-direction: column;
       font-family: 'MS Sans Serif', sans-serif;
@@ -609,56 +608,80 @@
     }
 
     .player-detail-body {
-      padding: 8px;
+      position: relative;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .pd-board-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .pd-log {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      width: 160px;
+      max-height: calc(100% - 16px);
       overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+      background: #c0c0c0;
+      border: 2px solid;
+      border-color: #ffffff #808080 #808080 #ffffff;
+      box-shadow: 1px 1px 0 #404040;
+      z-index: 10;
+      user-select: none;
     }
 
-    .cleared-item {
-      display: flex;
-      gap: 8px;
-      align-items: flex-start;
-      padding: 4px 0;
-      border-bottom: 1px solid #aaa;
-    }
-
-    .cleared-item:last-child {
-      border-bottom: none;
-    }
-
-    .cleared-item-img {
-      width: 48px;
-      height: 48px;
-      object-fit: cover;
-      flex-shrink: 0;
-      border: 1px solid #808080;
-    }
-
-    .cleared-item-info {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
-    }
-
-    .cleared-item-name {
+    .pd-log-titlebar {
+      background: #000080;
+      color: #ffffff;
+      padding: 2px 6px;
       font-size: 11px;
       font-weight: bold;
-      color: #000080;
+      font-family: 'MS Sans Serif', sans-serif;
     }
 
-    .cleared-item-text {
-      font-size: 8pt;
-      color: #000;
-      word-break: break-word;
-      line-height: 1.3;
+    .pd-log-item {
+      padding: 3px 8px;
+      font-size: 11px;
+      border-bottom: 1px solid #d0d0d0;
+      font-family: 'MS Sans Serif', sans-serif;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #cc0000;
     }
 
-    .cleared-item-role {
-      font-size: 9px;
-      color: #666;
+    .pd-img-stack {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      width: 150px;
+      height: 170px;
+      pointer-events: none;
+    }
+
+    .pd-stack-item {
+      position: absolute;
+      width: 130px;
+      height: 130px;
+      right: 0;
+      bottom: 0;
+    }
+
+    .pd-stack-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border: 1px solid rgba(0,0,0,0.2);
+      background: rgba(255,255,255,0.88);
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.25);
+      display: block;
     }
 
     body.zoomed {
@@ -850,51 +873,64 @@ function showPlayerDetail(record) {
   title.textContent = record.lat != null ? `${record.lat.toFixed(3)}, ${record.lng.toFixed(3)}` : 'Player';
   body.innerHTML = '';
 
+  // Center: final board
   if (record.board) {
-    body.appendChild(renderDetailBoard(record));
+    const boardCenter = document.createElement('div');
+    boardCenter.className = 'pd-board-center';
+    boardCenter.appendChild(renderDetailBoard(record));
+    body.appendChild(boardCenter);
   }
 
+  // Left: tracked log panel
   const items = record.clearedItems || [];
+  const logPanel = document.createElement('div');
+  logPanel.className = 'pd-log';
+  const logTitle = document.createElement('div');
+  logTitle.className = 'pd-log-titlebar';
+  logTitle.textContent = 'Tracked';
+  logPanel.appendChild(logTitle);
   items.forEach(item => {
-    const row = document.createElement('div');
-    row.className = 'cleared-item';
-
-    const imgUrl = getImageUrl(item.img);
-    if (imgUrl) {
-      const img = document.createElement('img');
-      img.className = 'cleared-item-img';
-      img.src = imgUrl;
-      img.alt = '';
-      row.appendChild(img);
-    }
-
-    const info = document.createElement('div');
-    info.className = 'cleared-item-info';
-
-    if (item.name) {
-      const name = document.createElement('div');
-      name.className = 'cleared-item-name';
-      name.textContent = item.name;
-      info.appendChild(name);
-    }
-    if (item.text) {
-      const text = document.createElement('div');
-      text.className = 'cleared-item-text';
-      text.textContent = item.text;
-      info.appendChild(text);
-    }
-    if (item.role || item.type) {
-      const role = document.createElement('div');
-      role.className = 'cleared-item-role';
-      role.textContent = [item.role, item.type].filter(Boolean).join(' / ');
-      info.appendChild(role);
-    }
-
-    row.appendChild(info);
-    body.appendChild(row);
+    const entry = document.createElement('div');
+    entry.className = 'pd-log-item';
+    entry.textContent = item.name || item.text || '';
+    logPanel.appendChild(entry);
   });
+  body.appendChild(logPanel);
+
+  // Bottom-right: img stack
+  const imgStack = document.createElement('div');
+  imgStack.className = 'pd-img-stack';
+  let depth = 0;
+  items.forEach(item => {
+    const imgUrl = getImageUrl(item.img);
+    if (!imgUrl) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'pd-stack-item';
+    wrap.style.bottom = `${depth * 10}px`;
+    wrap.style.zIndex = depth + 1;
+    const img = document.createElement('img');
+    img.src = imgUrl;
+    img.alt = '';
+    wrap.appendChild(img);
+    imgStack.appendChild(wrap);
+    depth++;
+  });
+  body.appendChild(imgStack);
 
   overlay.classList.add('visible');
+}
+
+function getSpiralPositions(n) {
+  const pos = [[0, 0]];
+  let ring = 1;
+  while (pos.length < n) {
+    for (let c = -ring; c <= ring && pos.length < n; c++) pos.push([-ring, c]);
+    for (let r = -ring+1; r <= ring && pos.length < n; r++) pos.push([r, ring]);
+    for (let c = ring-1; c >= -ring && pos.length < n; c--) pos.push([ring, c]);
+    for (let r = ring-1; r >= -ring+1 && pos.length < n; r--) pos.push([r, -ring]);
+    ring++;
+  }
+  return pos.slice(0, n);
 }
 
 function showWorldScreen(records, myRecord) {
@@ -902,28 +938,28 @@ function showWorldScreen(records, myRecord) {
   screen.innerHTML = '';
   screen.classList.add('visible');
 
+  const CELL = 20;
   const BR = myRecord.rows || rows;
   const BC = myRecord.cols || cols;
 
-  // Build ordered players: others chronological, me at center
-  const n = records.length + 1;
-  const metaCols = Math.ceil(Math.sqrt(n));
-  const metaRows = Math.ceil(n / metaCols);
-  const myIdx = Math.floor((metaRows * metaCols) / 2);
+  // Spiral: me at [0,0], others radiate outward
+  const allPlayers = [{ record: myRecord, isMe: true },
+    ...records.map(r => ({ record: r, isMe: false }))];
+  const spiralPos = getSpiralPositions(allPlayers.length);
 
-  const slots = [];
-  let otherIdx = 0;
-  for (let i = 0; i < metaRows * metaCols; i++) {
-    if (i === myIdx) {
-      slots.push({ record: myRecord, isMe: true });
-    } else {
-      slots.push(otherIdx < records.length ? { record: records[otherIdx++], isMe: false } : null);
-    }
-  }
+  // Build position map: [metaRow, metaCol] → player
+  const posMap = new Map();
+  spiralPos.forEach(([r, c], i) => posMap.set(`${r},${c}`, allPlayers[i]));
 
-  const CELL = 20;
-  const totalCols = metaCols * BC;
+  // Bounding box
+  const allR = spiralPos.map(p => p[0]);
+  const allC = spiralPos.map(p => p[1]);
+  const minR = Math.min(...allR), maxR = Math.max(...allR);
+  const minC = Math.min(...allC), maxC = Math.max(...allC);
+  const metaRows = maxR - minR + 1;
+  const metaCols = maxC - minC + 1;
   const totalRows = metaRows * BR;
+  const totalCols = metaCols * BC;
 
   const wrap = document.createElement('div');
   wrap.className = 'combined-board-wrap';
@@ -934,10 +970,9 @@ function showWorldScreen(records, myRecord) {
 
   for (let gr = 0; gr < totalRows; gr++) {
     for (let gc = 0; gc < totalCols; gc++) {
-      const mrow = Math.floor(gr / BR);
-      const mcol = Math.floor(gc / BC);
-      const pidx = mrow * metaCols + mcol;
-      const slot = slots[pidx];
+      const mrow = Math.floor(gr / BR) + minR;
+      const mcol = Math.floor(gc / BC) + minC;
+      const slot = posMap.get(`${mrow},${mcol}`) || null;
 
       if (!slot) {
         const empty = document.createElement('div');
@@ -953,7 +988,6 @@ function showWorldScreen(records, myRecord) {
       const lc = gc % BC;
       const rowStrs = (record.board || '').split('|');
       const ch = (lr < pRows && lc < pCols) ? ((rowStrs[lr] || '')[lc] || '.') : ' ';
-
       board.appendChild(buildWorldCell(ch, isMe, isMe ? null : () => showPlayerDetail(record)));
     }
   }
@@ -961,9 +995,9 @@ function showWorldScreen(records, myRecord) {
   wrap.appendChild(board);
   screen.appendChild(wrap);
 
-  // Scroll to my board
-  const myMetaRow = Math.floor(myIdx / metaCols);
-  const myMetaCol = myIdx % metaCols;
+  // Scroll so my board (spiral pos [0,0]) is centered on screen
+  const myMetaCol = 0 - minC;
+  const myMetaRow = 0 - minR;
   const scrollX = myMetaCol * BC * CELL + (BC * CELL / 2) - window.innerWidth / 2;
   const scrollY = myMetaRow * BR * CELL + (BR * CELL / 2) - window.innerHeight / 2;
   setTimeout(() => {
