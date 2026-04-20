@@ -622,6 +622,132 @@
       color: #444;
     }
 
+    .record-card:not(.is-me) {
+      cursor: pointer;
+    }
+
+    .record-card:not(.is-me):hover {
+      outline: 2px solid #000080;
+    }
+
+    .player-detail-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 4000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .player-detail-overlay.visible {
+      display: flex;
+    }
+
+    .player-detail-window {
+      background: #c0c0c0;
+      border-top: 2px solid #fff;
+      border-left: 2px solid #fff;
+      border-right: 2px solid #000;
+      border-bottom: 2px solid #000;
+      min-width: 280px;
+      max-width: 480px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      font-family: 'MS Sans Serif', sans-serif;
+    }
+
+    .player-detail-titlebar {
+      background: #000080;
+      color: #fff;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 3px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .player-detail-close {
+      background: #c0c0c0;
+      border-top: 1px solid #fff;
+      border-left: 1px solid #fff;
+      border-right: 1px solid #000;
+      border-bottom: 1px solid #000;
+      color: #000;
+      font-size: 10px;
+      width: 16px;
+      height: 14px;
+      cursor: pointer;
+      font-family: 'MS Sans Serif', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .player-detail-body {
+      padding: 8px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .player-detail-empty {
+      font-size: 11px;
+      color: #666;
+      padding: 8px 0;
+      text-align: center;
+    }
+
+    .cleared-item {
+      background: #fff;
+      border-top: 1px solid #888;
+      border-left: 1px solid #888;
+      border-right: 1px solid #fff;
+      border-bottom: 1px solid #fff;
+      padding: 6px;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .cleared-item-img {
+      width: 48px;
+      height: 48px;
+      object-fit: cover;
+      flex-shrink: 0;
+      border: 1px solid #888;
+      background: #c0c0c0;
+    }
+
+    .cleared-item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .cleared-item-name {
+      font-size: 11px;
+      font-weight: bold;
+      color: #000080;
+    }
+
+    .cleared-item-text {
+      font-size: 10px;
+      color: #000;
+      word-break: break-word;
+    }
+
+    .cleared-item-role {
+      font-size: 9px;
+      color: #666;
+    }
+
     body.zoomed {
       overflow: hidden;
     }
@@ -670,6 +796,15 @@
   <div id="img-stack"></div>
   <div id="win-message" class="win-message"></div>
   <div id="world-screen" class="world-screen"></div>
+  <div id="player-detail-overlay" class="player-detail-overlay">
+    <div class="player-detail-window">
+      <div class="player-detail-titlebar">
+        <span id="player-detail-title">Player</span>
+        <button class="player-detail-close" id="player-detail-close">✕</button>
+      </div>
+      <div class="player-detail-body" id="player-detail-body"></div>
+    </div>
+  </div>
 
 <script>
 
@@ -697,13 +832,34 @@ function serializeBoard() {
   }).join('')).join('|');
 }
 
-async function saveRecord(lat, lng, boardStr, boardRows, boardCols) {
+function getClearedItems() {
+  const items = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cell = board[r][c];
+      if (cell.mineCleared && cell.hoverItems && cell.hoverItems.bomb) {
+        const item = cell.hoverItems.bomb;
+        items.push({
+          name: item.name || '',
+          text: item.text || '',
+          type: item.type || '',
+          role: item.role || '',
+          img: item.img || '',
+          link: item.link || ''
+        });
+      }
+    }
+  }
+  return items;
+}
+
+async function saveRecord(lat, lng, boardStr, boardRows, boardCols, clearedItems) {
   if (!FIREBASE_DB_URL.includes('YOUR-PROJECT')) {
     try {
       await fetch(FIREBASE_DB_URL + 'records.json', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lat, lng, ts: Date.now(), board: boardStr, rows: boardRows, cols: boardCols })
+        body: JSON.stringify({ lat, lng, ts: Date.now(), board: boardStr, rows: boardRows, cols: boardCols, clearedItems: clearedItems || [] })
       });
     } catch (e) {}
   }
@@ -741,6 +897,65 @@ function renderMiniBoard(boardStr, boardRows, boardCols, isMe) {
   return container;
 }
 
+function showPlayerDetail(record) {
+  const overlay = document.getElementById('player-detail-overlay');
+  const body = document.getElementById('player-detail-body');
+  const title = document.getElementById('player-detail-title');
+
+  const label = record.lat != null ? `${record.lat.toFixed(3)}, ${record.lng.toFixed(3)}` : 'Player';
+  title.textContent = label;
+  body.innerHTML = '';
+
+  const items = record.clearedItems || [];
+  if (items.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'player-detail-empty';
+    empty.textContent = '기록된 항목이 없습니다.';
+    body.appendChild(empty);
+  } else {
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'cleared-item';
+
+      const imgUrl = getImageUrl(item.img);
+      if (imgUrl) {
+        const img = document.createElement('img');
+        img.className = 'cleared-item-img';
+        img.src = imgUrl;
+        img.alt = item.name || '';
+        row.appendChild(img);
+      }
+
+      const info = document.createElement('div');
+      info.className = 'cleared-item-info';
+
+      const name = document.createElement('div');
+      name.className = 'cleared-item-name';
+      name.textContent = item.name || '';
+      info.appendChild(name);
+
+      if (item.text) {
+        const text = document.createElement('div');
+        text.className = 'cleared-item-text';
+        text.textContent = item.text;
+        info.appendChild(text);
+      }
+
+      if (item.role || item.type) {
+        const role = document.createElement('div');
+        role.className = 'cleared-item-role';
+        role.textContent = [item.role, item.type].filter(Boolean).join(' / ');
+        info.appendChild(role);
+      }
+
+      row.appendChild(info);
+      body.appendChild(row);
+    });
+  }
+
+  overlay.classList.add('visible');
+}
+
 function makeRecordCard(record, isMe) {
   const card = document.createElement('div');
   card.className = 'record-card' + (isMe ? ' is-me' : '');
@@ -762,6 +977,11 @@ function makeRecordCard(record, isMe) {
     ts.textContent = new Date(record.ts).toLocaleString();
     card.appendChild(ts);
   }
+
+  if (!isMe) {
+    card.addEventListener('click', () => showPlayerDetail(record));
+  }
+
   return card;
 }
 
@@ -814,8 +1034,11 @@ async function showWinScreen() {
     cols
   };
 
+  const clearedItems = getClearedItems();
+  myRecord.clearedItems = clearedItems;
+
   if (userLocation) {
-    await saveRecord(userLocation.lat, userLocation.lng, boardStr, rows, cols);
+    await saveRecord(userLocation.lat, userLocation.lng, boardStr, rows, cols, clearedItems);
   }
 
   const allRecords = await loadRecords();
@@ -828,9 +1051,9 @@ async function showWinScreen() {
 }
 
 function generateGridFromCsv(count) {
-  const blocks = Math.max(1, Math.ceil(count / 2));
+  const blocks = Math.max(1, Math.ceil(count / 3));
   const gridSide = Math.max(1, Math.ceil(Math.sqrt(blocks)));
-  const side = gridSide * 4;
+  const side = gridSide * 2;
   const mines = Math.max(3, Math.floor(side * side * 0.09));
   return { rows: side, cols: side, mines };
 }
@@ -1150,6 +1373,7 @@ function toggleFlag(r, c) {
     cell.mine = false;
     cell.revealed = false;
     cell.flagged = true;
+    cell.mineCleared = true;
     flags += 1;
     updateAdjacencies();
     renderBoard();
@@ -1330,6 +1554,16 @@ flagToggle.addEventListener('click', () => {
 
 document.getElementById('hover-close').addEventListener('click', () => {
   hideHoverInfo();
+});
+
+document.getElementById('player-detail-close').addEventListener('click', () => {
+  document.getElementById('player-detail-overlay').classList.remove('visible');
+});
+
+document.getElementById('player-detail-overlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) {
+    e.currentTarget.classList.remove('visible');
+  }
 });
 
 function reorderStack() {
