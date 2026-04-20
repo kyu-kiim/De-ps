@@ -465,150 +465,49 @@
       inset: 0;
       background: #c0c0c0;
       z-index: 3000;
-      overflow-y: auto;
-      font-family: 'MS Sans Serif', 'Arial', sans-serif;
-      font-size: 12px;
+      overflow: auto;
     }
 
     .world-screen.visible {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 16px 16px 40px 16px;
-      gap: 16px;
+      display: block;
     }
 
-    .world-titlebar {
-      width: 100%;
-      max-width: 800px;
+    .world-hint-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
       background: #000080;
       color: #fff;
       font-family: 'MS Sans Serif', sans-serif;
-      font-size: 12px;
-      font-weight: bold;
-      padding: 3px 8px;
-      box-sizing: border-box;
-      border-top: 2px solid #fff;
-      border-left: 2px solid #fff;
-      border-right: 2px solid #000;
-      border-bottom: 2px solid #000;
-    }
-
-    .world-my-section {
-      width: 100%;
-      max-width: 800px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .world-my-label {
-      font-family: 'MS Sans Serif', sans-serif;
       font-size: 11px;
-      color: #000080;
-      font-weight: bold;
+      padding: 3px 10px;
+      z-index: 3100;
+      pointer-events: none;
     }
 
-    .world-others-label {
-      font-family: 'MS Sans Serif', sans-serif;
-      font-size: 11px;
-      color: #444;
-      font-weight: bold;
-      width: 100%;
-      max-width: 800px;
-      border-bottom: 1px solid #888;
-      padding-bottom: 4px;
-      margin-top: 8px;
+    .combined-board-wrap {
+      padding: 36px 40px 60px 40px;
+      min-width: max-content;
     }
 
-    .world-others-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      justify-content: center;
-      width: 100%;
-      max-width: 800px;
-    }
-
-    .record-card {
-      background: #c0c0c0;
-      border-top: 2px solid #fff;
-      border-left: 2px solid #fff;
-      border-right: 2px solid #000;
-      border-bottom: 2px solid #000;
-      padding: 4px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .record-card.is-me {
-      border: 3px solid #000080;
-      box-shadow: 0 0 0 2px #fff, 0 0 0 4px #000080;
-    }
-
-    .record-titlebar {
-      width: 100%;
-      background: #000080;
-      color: #fff;
-      font-family: 'MS Sans Serif', sans-serif;
-      font-size: 10px;
-      padding: 2px 4px;
-      box-sizing: border-box;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .record-card.is-me .record-titlebar {
-      background: #000080;
-      font-weight: bold;
-    }
-
-    .record-mini-board {
+    .combined-board {
       display: grid;
-      border-top: 2px solid #888;
-      border-left: 2px solid #888;
-      border-right: 2px solid #fff;
-      border-bottom: 2px solid #fff;
+      position: relative;
     }
 
-    .record-mini-cell {
-      width: 8px;
-      height: 8px;
-      box-sizing: border-box;
-      background: #c0c0c0;
-      border: 1px solid #888;
-      font-size: 5px;
-      line-height: 8px;
-      text-align: center;
-      color: #000;
-      overflow: hidden;
-    }
-
-    .record-card.is-me .record-mini-cell {
+    .world-cell {
       width: 14px;
       height: 14px;
+      box-sizing: border-box;
       font-size: 8px;
+      text-align: center;
       line-height: 14px;
+      overflow: hidden;
+      flex-shrink: 0;
     }
 
-    .record-mini-cell.revealed {
-      background: #c0c0c0;
-      border: 1px solid #999;
-    }
-
-    .record-mini-cell.revealed.mine {
-      background: #ff0000;
-    }
-
-    .record-mini-cell.flagged {
-      background: #c0c0c0;
-    }
-
-    .record-mini-cell.unrevealed {
+    .world-cell.wc-hidden {
       background: #c0c0c0;
       border-top: 2px solid #fff;
       border-left: 2px solid #fff;
@@ -616,18 +515,75 @@
       border-bottom: 2px solid #888;
     }
 
-    .record-ts {
-      font-family: 'MS Sans Serif', sans-serif;
-      font-size: 9px;
-      color: #444;
+    .world-cell.wc-open {
+      background: #c0c0c0;
+      border: 1px solid #999;
     }
 
-    .record-card:not(.is-me) {
+    .world-cell.wc-number {
+      background: #c0c0c0;
+      border: 1px solid #999;
+      font-weight: bold;
+      color: #00008b;
+    }
+
+    .world-cell.wc-flagged {
+      background: #c0c0c0;
+      border-top: 2px solid #fff;
+      border-left: 2px solid #fff;
+      border-right: 2px solid #888;
+      border-bottom: 2px solid #888;
+      font-size: 9px;
+    }
+
+    .world-cell.wc-mine {
+      background: #ff4444;
+      border: 1px solid #888;
+      font-size: 9px;
+    }
+
+    .world-cell.wc-empty {
+      background: #a8a8a8;
+    }
+
+    .world-cell.wc-me.wc-hidden {
+      background: #d0deff;
+      border-top: 2px solid #eef;
+      border-left: 2px solid #eef;
+      border-right: 2px solid #88a;
+      border-bottom: 2px solid #88a;
+    }
+
+    .world-cell.wc-me.wc-open,
+    .world-cell.wc-me.wc-number {
+      background: #dce8ff;
+    }
+
+    .world-cell.wc-me.wc-flagged {
+      background: #d0deff;
+    }
+
+    .world-cell:not(.wc-me):not(.wc-empty) {
       cursor: pointer;
     }
 
-    .record-card:not(.is-me):hover {
-      outline: 2px solid #000080;
+    .world-cell:not(.wc-me):not(.wc-empty):hover {
+      filter: brightness(1.15);
+      outline: 1px solid #000080;
+      z-index: 1;
+      position: relative;
+    }
+
+    .world-player-label {
+      position: absolute;
+      background: rgba(0,0,128,0.85);
+      color: #fff;
+      font-family: 'MS Sans Serif', sans-serif;
+      font-size: 9px;
+      padding: 1px 4px;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 10;
     }
 
     .player-detail-overlay {
@@ -651,8 +607,9 @@
       border-right: 2px solid #000;
       border-bottom: 2px solid #000;
       min-width: 280px;
-      max-width: 480px;
-      max-height: 80vh;
+      max-width: 600px;
+      width: 90vw;
+      max-height: 85vh;
       display: flex;
       flex-direction: column;
       font-family: 'MS Sans Serif', sans-serif;
@@ -875,26 +832,49 @@ async function loadRecords() {
   } catch (e) { return []; }
 }
 
-function renderMiniBoard(boardStr, boardRows, boardCols, isMe) {
-  const container = document.createElement('div');
-  container.className = 'record-mini-board';
-  container.style.gridTemplateColumns = `repeat(${boardCols}, ${isMe ? 14 : 8}px)`;
-  const rowStrings = boardStr ? boardStr.split('|') : [];
-  for (let r = 0; r < boardRows; r++) {
-    const rowStr = rowStrings[r] || '';
-    for (let c = 0; c < boardCols; c++) {
-      const cell = document.createElement('div');
+function cellCharClass(ch) {
+  if (ch === 'F') return 'wc-flagged';
+  if (ch === 'X') return 'wc-mine';
+  if (ch === '_') return 'wc-open';
+  if (ch >= '1' && ch <= '8') return 'wc-number';
+  return 'wc-hidden';
+}
+
+function cellCharText(ch) {
+  if (ch === 'F') return '🚩';
+  if (ch === 'X') return '💣';
+  if (ch >= '1' && ch <= '8') return ch;
+  return '';
+}
+
+function renderDetailBoard(record) {
+  const bRows = record.rows || 4;
+  const bCols = record.cols || 4;
+  const rowStrs = (record.board || '').split('|');
+  const CELL = 16;
+
+  const boardEl = document.createElement('div');
+  boardEl.style.display = 'grid';
+  boardEl.style.gridTemplateColumns = `repeat(${bCols}, ${CELL}px)`;
+  boardEl.style.gridTemplateRows = `repeat(${bRows}, ${CELL}px)`;
+  boardEl.style.border = '2px inset #888';
+  boardEl.style.alignSelf = 'center';
+
+  for (let r = 0; r < bRows; r++) {
+    const rowStr = rowStrs[r] || '';
+    for (let c = 0; c < bCols; c++) {
       const ch = rowStr[c] || '.';
-      cell.className = 'record-mini-cell';
-      if (ch === '.') { cell.classList.add('unrevealed'); }
-      else if (ch === 'F') { cell.classList.add('flagged'); cell.textContent = '🚩'; }
-      else if (ch === 'X') { cell.classList.add('revealed', 'mine'); cell.textContent = '💣'; }
-      else if (ch === '_') { cell.classList.add('revealed'); }
-      else { cell.classList.add('revealed'); cell.textContent = ch; }
-      container.appendChild(cell);
+      const cell = document.createElement('div');
+      cell.className = 'world-cell ' + cellCharClass(ch);
+      cell.style.width = CELL + 'px';
+      cell.style.height = CELL + 'px';
+      cell.style.lineHeight = CELL + 'px';
+      cell.style.fontSize = '9px';
+      cell.textContent = cellCharText(ch);
+      boardEl.appendChild(cell);
     }
   }
-  return container;
+  return boardEl;
 }
 
 function showPlayerDetail(record) {
@@ -903,16 +883,35 @@ function showPlayerDetail(record) {
   const title = document.getElementById('player-detail-title');
 
   const label = record.lat != null ? `${record.lat.toFixed(3)}, ${record.lng.toFixed(3)}` : 'Player';
-  title.textContent = label;
+  const ts = record.ts ? `  —  ${new Date(record.ts).toLocaleString()}` : '';
+  title.textContent = label + ts;
   body.innerHTML = '';
 
+  // Final board
+  if (record.board) {
+    const boardSection = document.createElement('div');
+    boardSection.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px;padding-bottom:8px;border-bottom:1px solid #aaa;';
+    const boardLabel = document.createElement('div');
+    boardLabel.style.cssText = 'font-size:10px;color:#444;font-family:MS Sans Serif,sans-serif;';
+    boardLabel.textContent = '최종 보드';
+    boardSection.appendChild(boardLabel);
+    boardSection.appendChild(renderDetailBoard(record));
+    body.appendChild(boardSection);
+  }
+
+  // Cleared items
   const items = record.clearedItems || [];
   if (items.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'player-detail-empty';
-    empty.textContent = '기록된 항목이 없습니다.';
+    empty.textContent = '제거한 지뢰 기록이 없습니다.';
     body.appendChild(empty);
   } else {
+    const itemsLabel = document.createElement('div');
+    itemsLabel.style.cssText = 'font-size:10px;color:#444;font-family:MS Sans Serif,sans-serif;padding-top:4px;';
+    itemsLabel.textContent = `제거한 지뢰 (${items.length})`;
+    body.appendChild(itemsLabel);
+
     items.forEach(item => {
       const row = document.createElement('div');
       row.className = 'cleared-item';
@@ -956,65 +955,107 @@ function showPlayerDetail(record) {
   overlay.classList.add('visible');
 }
 
-function makeRecordCard(record, isMe) {
-  const card = document.createElement('div');
-  card.className = 'record-card' + (isMe ? ' is-me' : '');
-
-  const titlebar = document.createElement('div');
-  titlebar.className = 'record-titlebar';
-  const label = isMe ? '★ You' : (record.lat != null ? `${record.lat.toFixed(2)},${record.lng.toFixed(2)}` : 'Player');
-  titlebar.textContent = label;
-  card.appendChild(titlebar);
-
-  const bRows = record.rows || 4;
-  const bCols = record.cols || 4;
-  const miniBoard = renderMiniBoard(record.board || '', bRows, bCols, isMe);
-  card.appendChild(miniBoard);
-
-  if (record.ts) {
-    const ts = document.createElement('div');
-    ts.className = 'record-ts';
-    ts.textContent = new Date(record.ts).toLocaleString();
-    card.appendChild(ts);
-  }
-
-  if (!isMe) {
-    card.addEventListener('click', () => showPlayerDetail(record));
-  }
-
-  return card;
-}
-
 function showWorldScreen(records, myRecord) {
   const screen = document.getElementById('world-screen');
   screen.innerHTML = '';
   screen.classList.add('visible');
 
-  const titlebar = document.createElement('div');
-  titlebar.className = 'world-titlebar';
-  titlebar.textContent = 'DE-PS — Game Complete';
-  screen.appendChild(titlebar);
+  // Hint bar
+  const hintBar = document.createElement('div');
+  hintBar.className = 'world-hint-bar';
+  hintBar.textContent = 'DE-PS — 다른 플레이어의 판을 클릭해서 기록을 확인하세요';
+  screen.appendChild(hintBar);
 
-  const mySection = document.createElement('div');
-  mySection.className = 'world-my-section';
+  const CELL = 14;
+  const BR = myRecord.rows || rows;
+  const BC = myRecord.cols || cols;
 
-  const myLabel = document.createElement('div');
-  myLabel.className = 'world-my-label';
-  myLabel.textContent = '— Your Board —';
-  mySection.appendChild(myLabel);
+  // Build ordered players: others chronological, me at center
+  const n = records.length + 1;
+  const metaCols = Math.ceil(Math.sqrt(n));
+  const metaRows = Math.ceil(n / metaCols);
+  const myIdx = Math.floor((metaRows * metaCols) / 2);
 
-  mySection.appendChild(makeRecordCard(myRecord, true));
-  screen.appendChild(mySection);
+  const slots = [];
+  let otherIdx = 0;
+  for (let i = 0; i < metaRows * metaCols; i++) {
+    if (i === myIdx) {
+      slots.push({ record: myRecord, isMe: true });
+    } else {
+      slots.push(otherIdx < records.length ? { record: records[otherIdx++], isMe: false } : null);
+    }
+  }
 
-  const othersLabel = document.createElement('div');
-  othersLabel.className = 'world-others-label';
-  othersLabel.textContent = 'Other Players';
-  screen.appendChild(othersLabel);
+  const totalCols = metaCols * BC;
+  const totalRows = metaRows * BR;
 
-  const grid = document.createElement('div');
-  grid.className = 'world-others-grid';
-  records.forEach(r => grid.appendChild(makeRecordCard(r, false)));
-  screen.appendChild(grid);
+  const wrap = document.createElement('div');
+  wrap.className = 'combined-board-wrap';
+
+  const board = document.createElement('div');
+  board.className = 'combined-board';
+  board.style.gridTemplateColumns = `repeat(${totalCols}, ${CELL}px)`;
+  board.style.gridTemplateRows = `repeat(${totalRows}, ${CELL}px)`;
+  board.style.width = `${totalCols * CELL}px`;
+  board.style.height = `${totalRows * CELL}px`;
+
+  // Track last hovered player to avoid re-opening popup on every cell
+  let lastHoveredPlayer = null;
+
+  for (let gr = 0; gr < totalRows; gr++) {
+    for (let gc = 0; gc < totalCols; gc++) {
+      const mrow = Math.floor(gr / BR);
+      const mcol = Math.floor(gc / BC);
+      const pidx = mrow * metaCols + mcol;
+      const slot = slots[pidx];
+
+      const cellEl = document.createElement('div');
+      cellEl.className = 'world-cell';
+
+      if (!slot) {
+        cellEl.classList.add('wc-empty');
+      } else {
+        const { record, isMe } = slot;
+        const pRows = record.rows || BR;
+        const pCols = record.cols || BC;
+        const lr = gr % BR;
+        const lc = gc % BC;
+        const rowStrs = (record.board || '').split('|');
+        const ch = (lr < pRows && lc < pCols) ? ((rowStrs[lr] || '')[lc] || '.') : ' ';
+
+        if (ch === ' ') {
+          cellEl.classList.add('wc-empty');
+        } else {
+          cellEl.classList.add(cellCharClass(ch));
+          cellEl.textContent = cellCharText(ch);
+          if (isMe) cellEl.classList.add('wc-me');
+        }
+
+        if (!isMe && ch !== ' ') {
+          cellEl.addEventListener('mouseenter', () => {
+            if (lastHoveredPlayer !== pidx) {
+              lastHoveredPlayer = pidx;
+            }
+          });
+          cellEl.addEventListener('click', () => showPlayerDetail(record));
+        }
+      }
+
+      board.appendChild(cellEl);
+    }
+  }
+
+  wrap.appendChild(board);
+  screen.appendChild(wrap);
+
+  // Scroll to center my board
+  const myMetaRow = Math.floor(myIdx / metaCols);
+  const myMetaCol = myIdx % metaCols;
+  const scrollX = myMetaCol * BC * CELL + (BC * CELL / 2) - window.innerWidth / 2;
+  const scrollY = myMetaRow * BR * CELL + (BR * CELL / 2) - window.innerHeight / 2;
+  setTimeout(() => {
+    screen.scrollTo({ left: Math.max(0, scrollX), top: Math.max(0, scrollY), behavior: 'smooth' });
+  }, 100);
 }
 
 async function showWinScreen() {
